@@ -1,9 +1,17 @@
+from typing import Any, Optional
+
 import numpy as np
+import numpy.typing as npt
 import os
 import math
 import uuid
 from xml.sax.saxutils import escape
-from . import stl_combine
+# from . import stl_combine
+from onshape_api.sdf_elements import (
+    FormatStrings,
+    Attributes,
+    Elements,
+)
 
 
 def xml_escape(unescaped: str) -> str:
@@ -14,7 +22,15 @@ def xml_escape(unescaped: str) -> str:
         "\"": "&quot;"
     })
 
-def rotationMatrixToEulerAngles(R):
+def rotationMatrixToEulerAngles(R: npt.ArrayLike):
+    """Converts a rotation matrix to its Euler angle parameterization.
+
+    Args:
+        R: an input rotation matrix
+    
+    Returns:
+        The equivalent (x, y, z) Euler angles
+    """
     sy = math.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
 
     singular = sy < 1e-6
@@ -29,29 +45,6 @@ def rotationMatrixToEulerAngles(R):
         z = 0
 
     return np.array([x, y, z])
-
-
-def origin(matrix):
-    urdf = '<origin xyz="%.20g %.20g %.20g" rpy="%.20g %.20g %.20g" />'
-    x = matrix[0, 3]
-    y = matrix[1, 3]
-    z = matrix[2, 3]
-    rpy = rotationMatrixToEulerAngles(matrix)
-
-    return urdf % (x, y, z, rpy[0], rpy[1], rpy[2])
-
-
-def pose(matrix, frame=''):
-    sdf = '<pose>%.20g %.20g %.20g %.20g %.20g %.20g</pose>'
-    x = matrix[0, 3]
-    y = matrix[1, 3]
-    z = matrix[2, 3]
-    rpy = rotationMatrixToEulerAngles(matrix)
-
-    if frame != '':
-        sdf = '<frame name="'+frame+'_frame">'+sdf+'</frame>'
-
-    return sdf % (x, y, z, rpy[0], rpy[1], rpy[2])
 
 
 class RobotDescription(object):
@@ -352,19 +345,85 @@ class RobotURDF(RobotDescription):
 
 
 class RobotSDF(RobotDescription):
-    def __init__(self, name):
+    def __init__(self, name: str):
         super().__init__(name)
         self.ext = 'sdf'
         self.relative = False
-        self.append('<sdf version="1.6">')
-        self.append('<model name="'+self.robotName + '">')
+        self.append('<sdf version="1.7">')
+        self.append('<model name="' + self.robotName + '">')
+
+    def add_link(self, name: str) -> str:
+        """ Useful elements: 
+            gravity
+            enable_wind
+            self_collide
+            kinematic
+            must_be_base_link
+            velocity decay
+            # Ones we will make in the file
+            pose
+            interial
+            collision
+            visual
+            sensor """
         pass
+
+    def pose(
+        self,
+        se3_matrix: npt.ArrayLike,
+        quaternion: bool = False,
+        frame: Optional[str] = None
+        ) -> str:
+        """Generates a pose and optional frame to append to the matrix for the SDF."""
+        attr_list = []
+        if frame is not None:
+            attr_list.append(build_attribute(Attributes.relative_to, FormatStrings.strings(), frame))
+
+        if quaternion:
+            rot_format_data = "quat_xyzw"
+        else:
+            rot_format_data = "euler_rpy"
+
+        attr_list.append(build_attribute(Attributes.rotation_format, FormatStrings.strings(), rot_format_data))
+
+        x = se3_matrix[0, 3]
+        y = se3_matrix[1, 3]
+        z = se3_matrix[2, 3]
+        rpy = rotationMatrixToEulerAngles(se3_matrix)
+        
+        pose_format_string = FormatStrings.floats(6)
+        return build_element(Elements.pose, pose_format_string, (x, y, z, rpy[0], rpy[1], rpy[2]), attr_list)
+
+    def inertial(
+        self,
+        auto_compute: bool = False,
+        mass: Optional[float] = None,
+        density: Optional[float] = None,
+        pose: Optional[str] = None,
+        inertia: Optional[str] = None,
+        ) -> str:
+        field_list = []
+        field_list.append(build_attribute(Attributes.auto, FormatStrings.bools(), auto_compute))
+
+        if mass is not None:
+            field_list.append(build_element(Elements.mass, FormatStrings.float(1), (mass,)))
+
+        if density is not None:
+            field_list.append(build_element(Elements.density, FormatStrings.float(1), (density,)))
+
+        if pose is not None:
+            field_list.append(build_element(Elements.pose, FormatStrings.strings(), (pose,)))
+
+        if inertia is not None:
+            field_list.append(build_element(Elements.inertia, FormatStrings.strings(), (inertia,)))
+
+        return build_element(Elements.inertial, FormatStrings.strings(), (""), field_list)
 
     def addFixedJoint(self, parent, child, matrix, name=None):
         if name is None:
-            name = parent+'_'+child+'_fixing'
+            name = parent + '_' + child + '_fixing'
 
-        self.append('<joint name="'+name+'" type="fixed">')
+        self.append('<joint name="' + name + '" type="fixed">')
         self.append(pose(matrix))
         self.append('<parent>'+parent+'</parent>')
         self.append('<child>'+child+'</child>')
@@ -457,6 +516,7 @@ class RobotSDF(RobotDescription):
         if node == 'visual':
             self.append(self.material(color))
         self.append('</'+node+'>')
+
 
     def addPart(self, matrix, stl, mass, com, inertia, color, shapes=None, name=''):
         name = self._link_name+'_'+str(self._link_childs)+'_'+name

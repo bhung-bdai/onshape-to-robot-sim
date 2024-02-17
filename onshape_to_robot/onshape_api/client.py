@@ -262,6 +262,9 @@ class Client():
 
         return self._api.request('post', '/api/blobelements/d/' + did + '/w/' + wid, headers=req_headers, body=payload)
 
+    # TODO(@bhung): come implement this but I don't think it's availabe for them at the moment?
+    # def export_obj(self, )
+
     def part_studio_stl(self, did, wid, eid):
         '''
         Exports STL export from a part studio
