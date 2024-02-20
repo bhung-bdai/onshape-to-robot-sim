@@ -1,4 +1,19 @@
-"""Implements SDF elements based on the SDFormat 1.11"""
+"""Implements SDF elements based on the SDFormat 1.11.
+
+Any used elements which contain more than a single data value should have a function that creates that element.
+These 'complex elements' (as I've deemed them) should be passed as fully built elements to other elements
+that contain them, instead of being built inside the higher level element. In essence, elements should only have 
+a depth of 1 in terms of how far down they should be making new elements. Any element containing other elements 
+with a depth greater than 1 should have their own specific functions to create them. 
+
+Attribute and Element are TypeAliases of strings. This is because both SDF fields are implemented as blocks of strings
+under the hood, but the user needs to understand the difference between them to properly parse them. 
+
+An instance of an Element is a string that represents a fully formed SDF element. An instance of an Attribute is a 
+string that represents a fully formed SDF attribute.
+
+TODO(@bhung): add docstrings for everything
+"""
 from dataclasses import dataclass, asdict
 from typing import Any, Optional, TypeAlias
 
@@ -44,6 +59,8 @@ class Elements:
     damping: str = "damping"
     density: str = "density"
     diffuse: str = "diffuse"
+    dissipation: str = "dissipation"
+    effort: str = "effort"
     emissive: str = "emissive"
     empty: str = "empty"
     force_torque: str = "force_torque"
@@ -60,6 +77,8 @@ class Elements:
     iyz: str = "iyz"
     izz: str = "izz"
     joint: str = "joint"
+    limit: str = "limit"
+    lower: str = "lower"
     mass: str = "mass"
     material: str = "material"
     mesh: str = "mesh"
@@ -68,9 +87,12 @@ class Elements:
     specular: str = "specular"
     spring_reference: str = "spring_reference"
     spring_stiffness: str = "spring_stiffness"
+    stiffness: str = "stiffness"
     topic: str = "topic"
     update_rate: str = "update_rate"
+    upper: str = "upper"
     uri: str = "uri"
+    velocity: str = "velocity"
     xyz: str = "xyz"
 
 
@@ -109,14 +131,17 @@ def _wrap_ends(
     body_string: str,
     end_tag: str,
     ) -> str:
+    """Wraps the ends of the a string with the start and end tags"""
     return start_tag + body_string + end_tag
 
 
 def _element_start(body_string: str) -> str:
+    """Wraps the start tag in XML brackets"""
     return _wrap_ends("<", body_string, ">\n")
 
 
 def _element_end(body_string: str) -> str:
+    """Wraps the end tag in XML brackets"""
     return _wrap_ends("</", body_string, ">\n")
 
 
@@ -209,7 +234,10 @@ def append_built_element(
     field_list: list[Element],
     element: Element,
     ) -> None:
-    """Created this to make it more obvious when we have an existing element we should be appending vs one we build"""
+    """Append a fully built element to the field list.
+
+    This function makes it obvious when we have an existing element to append vs one we need to build from scratch.
+    """
     field_list.append(element)
 
 
@@ -265,10 +293,38 @@ def dynamics(
     )
 
 
-def limit() -> Element:
-    #TODO(@bhung) implement this
-    pass
+def limit(
+    lower_limit: float,
+    upper_limit: float,
+    effort_limit: Optional[float] = None,
+    velocity_limit: Optional[float] = None,
+    joint_stop_stiffness: Optional[float] = None,
+    joint_stop_dissipation: Optional[float] = None,
+    ) -> Element:
+    field_list = []
+    float_format = Formatter.floats(1)
+    add_unbuilt_element(field_list, Elements.lower, float_format, lower_limit)
+    add_unbuilt_element(field_list, Elements.upper, float_format, upper_limit)
 
+    if effort_limit is not None:
+        add_unbuilt_element(field_list, Elements.effort, float_format, effort_limit)
+
+    if velocity_limit is not None:
+        add_unbuilt_element(field_list, Elements.velocity, float_format, velocity_limit)
+
+    if joint_stop_stiffness is not None:
+        add_unbuilt_element(field_list, Elements.stiffness, float_format, joint_stop_stiffness)
+
+    if joint_stop_dissipation is not None:
+        add_unbuilt_element(field_list, Elements.dissipation, float_format, joint_stop_dissipation)
+
+    return build_element(
+        Element.limit,
+        Formatter.empty(),
+        None,
+        element_fields_list=field_list
+    )
+    
 
 def gearbox_ratio(ratio: float) -> Element:
     return build_element(Elements.gearbox_ratio, Formatter.strings(), ratio)
