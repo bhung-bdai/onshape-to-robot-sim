@@ -7,7 +7,7 @@ from sys import exit
 import os
 import hashlib
 from . import csg
-from .robot_description import RobotURDF, RobotSDF
+# from .robot_description import RobotURDF, RobotSDF
 
 
 partNames = {}

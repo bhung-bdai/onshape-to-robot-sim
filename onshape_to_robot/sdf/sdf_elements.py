@@ -1,3 +1,5 @@
+# #!/usr/bin/env python3
+# Copyright (c) 2024 Boston Dynamics AI Institute LLC. All rights reserved.
 """Implements SDF elements based on the SDFormat 1.11.
 
 Any used elements which contain more than a single data value should have a function that creates that element.
@@ -15,7 +17,7 @@ string that represents a fully formed SDF attribute.
 TODO(@bhung): add docstrings for everything
 """
 from dataclasses import dataclass, asdict
-from typing import Any, Optional, TypeAlias
+from typing import Any, Optional, Sequence, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
@@ -115,7 +117,7 @@ class Formatter:
 
     @staticmethod
     def elements(format_string: str):
-        return format_string + " %s"
+        return format_string + "%s"
 
 
 def _combine_attributes(
@@ -132,7 +134,7 @@ def _wrap_ends(
     end_tag: str,
     ) -> str:
     """Wraps the ends of the a string with the start and end tags"""
-    return start_tag + body_string + end_tag
+    return f"{start_tag}{body_string}{end_tag}"
 
 
 def _element_start(body_string: str) -> str:
@@ -154,10 +156,10 @@ def build_attribute(
     if isinstance(attr_data, str):
         attr_data = (attr_data,)
     elif isinstance(attr_data, bool):
-        attr_data = ((attr_format % attr_data).lower(),)
+        attr_data = (f"{attr_data}".lower(),)
     elif isinstance(attr_data, float):
         attr_data = (attr_data,)
-    return attr_name + "=" + (attr_format % attr_data) 
+    return (attr_name + "=" + attr_format) % attr_data
 
 
 def build_element(
@@ -206,7 +208,7 @@ def add_attribute(
     attr_format: str,
     attr_data: Any,
     ) -> None:
-    attr_list.append(build_attribute(Attributes.attr_name, attr_format, attr_data))
+    attr_list.append(build_attribute(attr_name, attr_format, attr_data))
 
 
 def add_unbuilt_element(
@@ -230,15 +232,18 @@ def add_unbuilt_element(
     )
 
 
-def append_built_element(
+def append_optional_elements(
     field_list: list[Element],
-    element: Element,
+    element_list: Optional[list[Element]],
     ) -> None:
     """Append a fully built element to the field list.
 
     This function makes it obvious when we have an existing element to append vs one we need to build from scratch.
     """
-    field_list.append(element)
+    if element_list is None:
+        return
+    for element in element_list:
+        field_list.append(element)
 
 
 def xyz(
@@ -246,7 +251,9 @@ def xyz(
     reference_frame: Optional[str] = None
     ) -> Element:
     attr_list = []
-    add_attribute(attr_list, Attributes.expressed_in, Formatter.strings(), reference_frame)
+    if reference_frame is not None:
+        add_attribute(attr_list, Attributes.expressed_in, Formatter.strings(), reference_frame)
+
     return build_element(
         Elements.xyz,
         Formatter.floats(3),
@@ -257,15 +264,11 @@ def xyz(
 
 def axis(
     actuation_axis: Element,
-    dynamics: Optional[Element] = None,
-    limit: Optional[Element] = None,
+    optional_elements: Optional[list[Element]] = None,
     ) -> Element:
     field_list = []
-    append_built_element(field_list, actuation_axis)
-    if dynamics is not None:
-        append_built_element(field_list, dynamics)
-    if limit is not None:
-        append_built_element(field_list, limit)
+    field_list.append(actuation_axis)
+    append_optional_elements(field_list, optional_elements)
 
 
 def dynamics(
@@ -273,7 +276,7 @@ def dynamics(
     spring_stiffness: Optional[float] = None,
     damping: Optional[float] = None,
     friction: Optional[float] = None,
-    ) -> Elemnt:
+    ) -> Element:
     float_format = Formatter.floats(1)
     field_list = []
 
@@ -329,8 +332,10 @@ def limit(
 def gearbox_ratio(ratio: float) -> Element:
     return build_element(Elements.gearbox_ratio, Formatter.strings(), ratio)
 
+
 def child(child_link: str) -> Element:
     return build_element(Elements.child, Formatter.strings(), child_link)
+
 
 def parent(parent_link: str) -> Element:
     return build_element(Elements.parent, Formatter.strings(), parent_link)
@@ -370,8 +375,7 @@ def inertial(
     auto_compute: bool = False,
     mass: Optional[float] = None,
     density: Optional[float] = None,
-    pose: Optional[Element] = None,
-    inertia: Optional[Element] = None,
+    optional_elements: Optional[list[Element]] = None
     ) -> Element:
     attr_list = []
     add_attribute(attr_list, Attributes.auto, Formatter.bools(), auto_compute)
@@ -382,12 +386,8 @@ def inertial(
 
     if density is not None:
         add_unbuilt_element(field_list, Elements.density, Formatter.floats(1), density,)
-
-    if pose is not None:
-        append_built_element(field_list, pose)
-
-    if inertia is not None:
-        append_built_element(field_list, inertia)
+        
+    append_optional_elements(field_list, optional_elements)
 
     return build_element(
         Elements.inertial,
@@ -400,14 +400,13 @@ def inertial(
 
 def geometry(
     empty: bool = False,
-    mesh: Optional[Element] = None,
+    optional_elements: Optional[list[Elements]] = None
     ) -> Element:
     field_list = []
     if empty:
         add_unbuilt_element(Elements.empty, Formatter.empty(), None)
 
-    elif mesh is not None:
-        append_built_element(field_list, mesh)
+    append_optional_elements(field_list, optional_elements)
 
     return build_element(
         Elements.geometry,
@@ -450,12 +449,10 @@ def material(
 def joint(
     name: str,
     joint_type: str,
-    primary_axis: str,
     parent: str,
     child: str,
     gearbox_ratio: Optional[float] = None,
-    pose: Optional[Element] = None,
-    sensor: Optional[Element] = None,
+    optional_elements: Optional[list[Elements]] = None
     ) -> Element:
     string_format = Formatter.strings()
     attr_list = []
@@ -469,11 +466,7 @@ def joint(
     if gearbox_ratio is not None:
         add_unbuilt_element(field_list, Elements.gearbox_ratio, string_format, gearbox_ratio)
 
-    if pose is not None:
-        append_built_element(field_list, pose)
-
-    if sensor is not None:
-        append_built_element(field_list, sensor)
+    append_optional_elements(field_list, optional_elements)
 
     return build_element(
         Elements.joint,
@@ -490,9 +483,7 @@ def sensor(
     always_on: Optional[bool] = None,
     update_rate: Optional[float] = None,
     topic: Optional[str] = None,
-    pose: Optional[Element] = None,
-    force_torque: Optional[Element] = None,
-    imu: Optional[Element] = None,
+    optional_elements: Optional[list[Element]] = None,
     ) -> Element:
     string_format = Formatter.strings()
     attr_list = []
@@ -509,14 +500,7 @@ def sensor(
     if topic is not None:
         add_unbuilt_element(field_list, Elements.topic, string_format, topic)
 
-    if pose is not None:
-        append_built_element(field_list, pose)
-
-    if force_torque is not None:
-        append_built_element(field_list, force_torque)
-
-    if imu is not None:
-        append_built_element(field_list, imu)
+    append_optional_elements(field_list, optional_elements)
 
     return build_element(
         Elements.sensor,
