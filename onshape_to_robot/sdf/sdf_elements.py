@@ -1,4 +1,4 @@
-# #!/usr/bin/env python3
+#!/usr/bin/env python3
 # Copyright (c) 2024 Boston Dynamics AI Institute LLC. All rights reserved.
 """Implements SDF elements based on the SDFormat 1.11.
 
