@@ -10,3 +10,6 @@ simulation.
 
 * [Documentation](https://onshape-to-robot.readthedocs.io/)
 * [Examples](https://github.com/rhoban/onshape-to-robot-examples)
+
+
+You will also need to install gazebo and sdformat to get this to work. Unfortunately

@@ -10,7 +10,10 @@ version = "0.1.0"
 requires-python = ">=3.8"
 readme = "README.md"
 
-dependencies = []
+dependencies = [
+    "numpy>=1.26.3",
+    "onshape-client>=1.6.3",
+]
 
 [tool.setuptools.packages.find]
-where = ["onshape_to_robot"]
+where = ["onshape_to_sim"]

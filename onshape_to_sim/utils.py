@@ -38,20 +38,20 @@ def pose(se3_matrix: npt.ArrayLike) -> npt.ArrayLike:
     return np.concatenate((xyz, rpy), axis=0)
 
 # TODO Look into seeing if we need to express other properties in relative frames. This has the world one
-def express_mass_properties_in_element_frame(
+def express_mass_properties_in_world_frame(
     world_tform_element: npt.ArrayLike,
     mass: float,
-    com: npt.ArrayLike,
-    inertia: npt.ArrayLike
+    com_in_element_frame: npt.ArrayLike,
+    inertia_in_element_frame: npt.ArrayLike
     ) -> tuple: 
     world_r_element = world_tform_element[:3, :3]
 
     # Expressing COM in the link frame
-    com_in_element_frame = (world_tform_element @ np.array([com[0], com[1], com[2], 1]))[:3]
+    com_in_world_frame = (world_tform_element @ np.array([com[0], com[1], com[2], 1]))[:3]
 
     # Expressing inertia in the link frame
-    inertia_in_element_frame = world_r_element @ inertial @ world_r_element.T
-    return (mass, com_in_element_frame, inertia_in_element_frame)
+    inertia_in_world_frame = world_r_element @ inertial @ world_r_element.T
+    return mass, com_in_world_frame, inertia_in_world_frame
 
 
 def combine_inertial_properties(
