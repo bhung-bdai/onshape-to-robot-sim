@@ -368,8 +368,6 @@ class RobotSDF(RobotDescription):
             sensor """
         pass
 
-
-
     def addFixedJoint(self, parent, child, matrix, name=None):
         if name is None:
             name = parent + '_' + child + '_fixing'

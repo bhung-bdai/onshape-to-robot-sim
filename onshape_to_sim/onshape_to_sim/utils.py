@@ -47,10 +47,11 @@ def express_mass_properties_in_world_frame(
     world_r_element = world_tform_element[:3, :3]
 
     # Expressing COM in the link frame
-    com_in_world_frame = (world_tform_element @ np.array([com[0], com[1], com[2], 1]))[:3]
+    com_in_element_vector = np.array([com_in_element_frame[0], com_in_element_frame[1], com_in_element_frame[2], 1])
+    com_in_world_frame = (world_tform_element @ com_in_element_vector)[:3]
 
     # Expressing inertia in the link frame
-    inertia_in_world_frame = world_r_element @ inertial @ world_r_element.T
+    inertia_in_world_frame = world_r_element @ inertia_in_element_frame @ world_r_element.T
     return mass, com_in_world_frame, inertia_in_world_frame
 
 

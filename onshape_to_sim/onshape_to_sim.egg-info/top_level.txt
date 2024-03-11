@@ -1,4 +1,2 @@
 bullet
-onshape_api
-sdf
-test
+onshape_to_sim

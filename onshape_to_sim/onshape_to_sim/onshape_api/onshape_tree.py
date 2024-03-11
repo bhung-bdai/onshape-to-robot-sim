@@ -10,10 +10,12 @@ from typing import Any, Callable, Optional, Sequence, TypeAlias
 import numpy as np
 import numpy.typing as npt
 
+from onshape_to_sim.onshape_api.client import Client
 from onshape_to_sim.utils import (
     express_mass_properties_in_world_frame
 )
 
+onshape_client = Client(creds="test_config.json", logging=False)
 
 @dataclass
 class ElementAttributes:
@@ -67,6 +69,7 @@ class OccurrenceAttributes():
 
 @dataclass
 class MassAttributes():
+    bodies: str = "bodies"
     centroid: str = "centroid"
     hasMass: str = "hasMass"
     inertia: str = "inertia"
@@ -163,6 +166,13 @@ class OnshapeTreeNode():
         for child in self.children:
             child.print_names()
 
+    def print_mass_properties(self):
+        """Print mass properties"""
+        print(f"{self}", end=": ")
+        print(f"Mass: {self.mass}. Has mass: {self.has_mass}. COM: {self.com_wrt_world}")
+        for child in self.children:
+            child.print_mass_properties()
+
     def _initialize_node(
         self,
         occurrence_map: dict,
@@ -210,11 +220,12 @@ class OnshapeTreeNode():
 
         self.volume = mass_properties[MassAttributes.volume]
         self.has_mass = mass_properties[MassAttributes.hasMass]
+        print(mass_properties[MassAttributes.mass])
         self.mass, self.com_wrt_world, self.inertia_wrt_world = express_mass_properties_in_world_frame(
-            world_tform_element=self.world_tform_element,
-            mass=mass_properties[MassAttributes.mass],
-            com_in_element_frame=mass_properties[MassAttributes.centroid],
-            inertia_in_element_frame=mass_properties[MassAttributes.inertia]
+            world_tform_element = self.world_tform_element,
+            mass = mass_properties[MassAttributes.mass],
+            com_in_element_frame = mass_properties[MassAttributes.centroid],
+            inertia_in_element_frame = mass_properties[MassAttributes.inertia]
         )
         
 
@@ -255,7 +266,7 @@ def _extract_mass_properties(response: dict) -> dict:
     return mass_properties
 
 
-def _add_instance_mass_properties(instances: list, mass_properties_map: dict) -> None:
+def _add_instances_mass_properties(onshape_client: Client, instances: list, mass_properties_map: dict) -> None:
     """Updates a map from instance ids to mass properties in-place.
     
     Args:
@@ -268,19 +279,22 @@ def _add_instance_mass_properties(instances: list, mass_properties_map: dict) ->
             continue
         did = instance[CommonAttributes.documentId]
         eid = instance[CommonAttributes.elementId]
-        wmv = "m" # TODO: Check if document microversions are a consistent thing across all subassemblies
-        wmvid = instance[CommonAttributes.documentMicroversion]
-        part_id = None
+        wvm = "m" # TODO: Check if document microversions are a consistent thing across all subassemblies
+        wvmid = instance[CommonAttributes.documentMicroversion]
         if PartAttributes.partId in instance:
             part_id = instance[PartAttributes.partId]
-        # TODO: implement this function to grab mass properties and checks if it's a part or an assembly
-        response = onshape_client.mass_properties(did=did, eid=eid, wmv=wmv, wmvid=wmvid, part_id=part_id)
-        # Extract the relevant mass properies and put them into a dictionary for easy lookup later
-        mass_properties = _extract_mass_properties(response)
-        mass_properties_map[instance_id] = mass_properties
+            response = onshape_client.part_mass_properties(did=did, wvmid=wvmid, eid=eid, partid=part_id, wvm=wvm)
+            masses = [response[MassAttributes.bodies][part_id] for part_id in response[MassAttributes.bodies]]
+        else:
+            # Is an assembly
+            response = onshape_client.assembly_mass_properties(did=did, wvmid=wvmid, eid=eid, wvm=wvm)
+            masses = [response]
+        for mass in masses:
+            mass_properties = _extract_mass_properties(mass)
+            mass_properties_map[instance_id] = mass_properties
 
 
-def _build_mass_properties_map(instances: list, subassemblies: list) -> dict:
+def _build_mass_properties_map(onshape_client: Client, instances: list, subassemblies: list) -> dict:
     """Given a list of instances, return a map from their occurence ids to mass properties in each instance and subassembly.
     
     We need to map this separately because each will require an API call to either the assembly mass properties or the 
@@ -295,10 +309,10 @@ def _build_mass_properties_map(instances: list, subassemblies: list) -> dict:
         A map of occurrence IDs to their mass properties
     """
     mass_properties_map = {}
-    _add_instance_mass_properties(instances, mass_properties_map)
+    _add_instances_mass_properties(onshape_client, instances, mass_properties_map)
     for subassembly in subassemblies:
         # Add all of the instances from the subassemblies into the mass properties map
-        _add_instance_mass_properties(subassemblies[APIAttributes.instances])
+        _add_instances_mass_properties(onshape_client, subassembly[APIAttributes.instances], mass_properties_map)
     return mass_properties_map
 
 
@@ -390,9 +404,16 @@ def build_tree(json_assembly_data: dict) -> OnshapeTreeNode:
     root_subassemblies = _build_subassemblies_map(json_assembly_data[APIAttributes.subassemblies])
     root_mates = _build_features_map(root_dict[APIAttributes.features])
     root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
+    root_instances = root_dict[APIAttributes.instances]
+    root_mass_properties = _build_mass_properties_map(
+        onshape_client,
+        root_instances,
+        json_assembly_data[APIAttributes.subassemblies]
+        )
+    # print(root_mass_properties)
     root_node = OnshapeTreeNode(element_dict=root_dict)
     root_node.name = "root"
-    build_tree_helper(root_node, root_subassemblies, root_mates, root_occurrences)
+    build_tree_helper(root_node, root_subassemblies, root_mates, root_occurrences, root_mass_properties)
     return root_node
 
 
@@ -400,7 +421,8 @@ def build_tree_helper(
     root: OnshapeTreeNode,
     document_subassemblies: dict,
     document_mates: dict,
-    document_occurrences: dict
+    document_occurrences: dict,
+    document_mass_properties: dict,
     ) -> None:
     """Helper function which, given the root node and API document information, fills out the tree with nodes.
 
@@ -413,13 +435,16 @@ def build_tree_helper(
     stack = deque()
     stack.append(root)
     depth = 0
-    node = root
+    is_root_node = True
     while len(stack) > 0:
         next_node = stack.pop()
         next_element = next_node.element_dict
         # From the document holding the information about mates, add it in
         next_node._initialize_node(document_occurrences, document_mates)
-        # next_node._add_mass_properties(document_mass_properties)
+        if is_root_node:
+            is_root_node = False
+        else:
+            next_node._add_mass_properties(document_mass_properties)
         # Iterate through the elements in the API instances 
         for instance in next_element[APIAttributes.instances]:
             # Create a child node
@@ -432,6 +457,7 @@ def build_tree_helper(
                 path=next_node.path+occurrence_id
                 )
             child_node._initialize_node(document_occurrences, document_mates)
+            child_node._add_mass_properties(document_mass_properties)
 
             # Base case: we hit a part. Add the child to the node and skip adding it to the queue
             if instance[CommonAttributes.elementType] == ElementAttributes.part:
@@ -448,6 +474,7 @@ def build_tree_helper(
 
 
 def main():
+    # TODO: add this credentials things (client = Client(creds=""))
     with open("../test/data/multi_features_sub_assembly.txt", "r") as fi:
         json_data = json.load(fi)
     test = build_tree(json_data)
@@ -455,6 +482,7 @@ def main():
     test.print_children()
     test.print_joint_info()
     test.print_transforms()
+    test.print_mass_properties()
 
 
 if __name__ == "__main__":

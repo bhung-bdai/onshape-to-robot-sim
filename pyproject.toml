@@ -12,7 +12,6 @@ readme = "README.md"
 
 dependencies = [
     "numpy>=1.26.3",
-    "onshape-client>=1.6.3",
 ]
 
 [tool.setuptools.packages.find]
