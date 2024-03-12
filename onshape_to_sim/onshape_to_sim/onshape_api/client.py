@@ -7,6 +7,7 @@ Convenience functions for working with the Onshape API
 
 import mimetypes
 import random
+import requests
 import string
 import os
 import json
@@ -114,31 +115,30 @@ class Client():
         json_request = API.documents
         return self._api.request(API.get_request, json_request).json()
 
-    # TODO(@bhung): come implement this but I don't think it's availabe for them at the moment?
-    # def export_obj(self, )
+    def part_export_stl(self, did: str, wvmid: str, eid: str, part_id: str, wvm: str = "w") -> requests.Response:
+        """
+        Exports STL export from a part studio
 
-    # def part_studio_stl(self, did, wid, eid):
-    #     """
-    #     Exports STL export from a part studio
+        Args:
+            did: document id 
+            wvm: the type of document we want to draw from (workspace, version, or microversion)
+            wvmid: workspace/version/microversion id
+            eid: element id
+            part_id: the id of the part
 
-    #     Args:
-    #         - did (str): Document ID
-    #         - wid (str): Workspace ID
-    #         - eid (str): Element ID
-
-    #     Returns:
-    #         - requests.Response: Onshape response data
-    #     """
-
-    #     req_headers = {
-    #         'Accept': '*/*'
-    #     }
-    #     return self._api.request('get', 'partstudios/d/' + did + '/w/' + wid + '/e/' + eid + '/stl', headers=req_headers)
-
-    # def hash_partid(self, data):
-    #     m = hashlib.sha1()
-    #     m.update(data.encode('utf-8'))
-    #     return m.hexdigest()
+        Returns:
+            Onshape response data with the STL exported inside the request.content
+        """
+        json_request = join_api_url(
+            add_d_wvm_e_ids(API.parts, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
+            API.part_id,
+            part_id,
+            API.stl
+        )
+        req_headers = {
+            "Accept": "*/*"
+        }
+        return self._api.request(API.get_request, json_request, headers=req_headers)
 
     def all_elements_in_document(
         self,
@@ -153,7 +153,7 @@ class Client():
             wvm: the type of document we want to draw from (workspace, version, or microversion)
             wvmid: workspace/version/microversion id
         """
-        json_request = add_d_wvm_ids(API.documents, did, wvm, wvmid)
+        json_request = add_d_wvm_ids(API.documents, did=did, wvm=wvm, wvmid=wvmid)
         return self._api.request(
             API.get_request,
             json_request,
@@ -173,7 +173,7 @@ class Client():
             wvm: the type of document we want to draw from (workspace, version, or microversion)
             wvmid: workspace/version/microversion id
         """
-        json_request = add_d_wvm_ids(API.parts, did, wvm, wvmid)
+        json_request = add_d_wvm_ids(API.parts, did=did, wvm=wvm, wvmid=wvmid)
         return self._api.request(
             API.get_request,
             json_request,
@@ -196,11 +196,11 @@ class Client():
             wvmid: workspace/version/microversion id
             eid: element id
         """
-        json_request = add_d_wvm_e_ids(API.parts, did, wvm, wvmid, eid)
+        json_request = add_d_wvm_e_ids(API.parts, did=did, wvm=wvm, wvmid=wvmid, eid=eid)
         return self._api.request(
             API.get_request,
             json_request,
-            query={API.get_request: configuration}
+            query={API.config: configuration}
             ).json()
 
     def all_part_metadata(
@@ -220,7 +220,7 @@ class Client():
             eid: element id
         """
         json_request = join_api_url(
-            add_d_wvm_e_ids(API.metadata, did, wvm, wvmid, eid),
+            add_d_wvm_e_ids(API.metadata, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
             API.metadata_part
         )
         return self._api.request(
@@ -248,7 +248,7 @@ class Client():
             partid: the id of the part
         """
         json_request = join_api_url(
-            add_d_wvm_e_ids(API.metadata, did, wvm, wvmid, eid),
+            add_d_wvm_e_ids(API.metadata, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
             API.metadata_part,
             escape_url(partid)
         )
@@ -277,7 +277,7 @@ class Client():
             partid: the id of the part
         """
         json_request = join_api_url(
-            add_d_wvm_e_ids(API.parts, did, wvm, wvmid, eid),
+            add_d_wvm_e_ids(API.parts, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
             API.part_id,
             escape_url(partid),
             API.mass_properties
@@ -304,7 +304,7 @@ class Client():
             wvmid: workspace/version/microversion id
             eid: element id
             """
-        json_request = add_d_wvm_e_ids(API.assemblies, did, wvm, wvmid, eid)
+        json_request = add_d_wvm_e_ids(API.assemblies, did=did, wvm=wvm, wvmid=wvmid, eid=eid)
         return self._api.request(
             API.get_request,
             json_request,
@@ -328,7 +328,7 @@ class Client():
             eid: element id
         """
         json_request = join_api_url(
-            add_d_wvm_e_ids(API.assemblies, did, wvm, wvmid, eid),
+            add_d_wvm_e_ids(API.assemblies, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
             API.mass_properties
         )
         return self._api.request(

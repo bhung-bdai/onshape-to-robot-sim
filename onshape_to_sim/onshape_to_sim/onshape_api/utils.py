@@ -8,10 +8,65 @@ Handy functions for API key sample app
 from dataclasses import dataclass, asdict
 import logging
 from logging.config import dictConfig
+import os
+
+import open3d as o3d
 
 __all__ = [
     'log'
 ]
+
+
+@dataclass
+class API:
+    accept: str = "accept"
+    assemblies: str = "assemblies"
+    computed_properties: str = "includeComputedProperties"
+    config: str = "configuration"
+    default: str = "default"
+    documents: str = "documents"
+    elements: str = "elements"
+    mass_properties: str = "massproperties"
+    mass_override: str = "useMassPropertyOverrides"
+    mate_connectors: str = "includeMateConnectors"
+    mate_features: str = "includeMateFeatures"
+    metadata: str = "metadata"
+    metadata_part: str = "p"
+    microversion: str = "m"
+    part_id: str = "partid"
+    parts: str = "parts"
+    stl: str = "stl"
+    version: str = "v"
+    workspace: str = "w"
+    get_request: str = "get"
+
+
+@dataclass
+class APIAttributes():
+    features: str = "features"
+    instances: str = "instances"
+    occurrences: str = "occurrences"
+    rootAssembly: str = "rootAssembly"
+    subassemblies: str = "subAssemblies"
+
+
+@dataclass
+class CommonAttributes:
+    name: str = "name"
+    suppressed: str = "suppressed"
+    idNum: str = "id"
+    isStandardContent: str = "isStandardContent"
+    fullConfiguration: str = "fullConfiguration"
+    documentVersion: str = "documentVersion"
+    configuration: str = "configuration"
+    documentId: str = "documentId"
+    elementId: str = "elementId"
+    elementType: str = "type"
+    documentMicroversion: str = "documentMicroversion"
+    root: str = "root"
+    transform: str = "transform"
+    version: str = "documentVersion"
+    workspace: str = "documentWorkspace"
 
 
 @dataclass
@@ -21,25 +76,40 @@ class ElementAttributes:
 
 
 @dataclass
-class API:
-    assemblies: str = "assemblies"
-    computed_properties: str = "includeComputedProperties"
-    config: str = "configuration"
-    default: str = "default"
-    documents: str = "documents"
-    elements: str = "elements"
-    mass_properties: str = "massproperties"
-    mate_connectors: str = "includeMateConnectors"
-    mate_features: str = "includeMateFeatures"
-    metadata: str = "metadata"
-    microversion: str = "m"
-    part_id: str = "partid"
-    parts: str = "parts"
-    mass_override: str = "useMassPropertyOverrides"
-    metadata_part: str = "p"
-    version: str = "v"
-    workspace: str = "w"
-    get_request: str = "get"
+class FeatureAttributes():
+    children: str = "children"
+    is_parent: str = "is_parent"
+    featureData: str = "featureData"
+    mateType: str = "mateType"
+    matedEntities: str = "matedEntities"
+    matedOccurrence: str = "matedOccurrence"
+    matedCS: str = "matedCS"
+    origin: str = "origin"
+    parent: str = "parent"
+    xAxis: str = "xAxis"
+    yAxis: str = "yAxis"
+    zAxis: str = "zAxis"
+
+
+@dataclass
+class MassAttributes():
+    bodies: str = "bodies"
+    centroid: str = "centroid"
+    hasMass: str = "hasMass"
+    inertia: str = "inertia"
+    mass: str = "mass"
+    volume: str = "volume"
+
+@dataclass
+class OccurrenceAttributes():
+    path: str = "path"
+    hidden: str = "hidden"
+
+
+@dataclass
+class PartAttributes():
+    partId: str = "partId"
+    bodyType: str = "bodyType"
 
 
 def add_d_wvm_ids(api_request: str, did: str, wvm: str, wvmid: str) -> str:
@@ -68,7 +138,22 @@ def add_d_wvm_e_ids(api_request: str, did: str, wvm: str, wvmid: str, eid: str) 
         The properly formatted api request and calls.
     """
     request = add_d_wvm_ids(api_request, did, wvm, wvmid)
-    return request + "/e/" + eid 
+    return request + "/e/" + eid
+
+
+def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "") -> None:
+    """Given a list of stl files, saves them as .objs with the same name
+
+    Args:
+        stl_files: the absolute paths to the stl files
+        stl_dir: the directory where the stls are located
+        save_dir: the directory we want to save the .obj files to
+    """
+    for stl in stl_files:
+        stl_mesh = o3d.io.read_triangle_mesh(os.path.join(stl_dir, stl))
+        obj_filename = stl.split(".")[0]
+        obj_path = os.path.join(save_dir, obj_filename + ".obj")
+        o3d.io.write_triangle_mesh(obj_path, stl_mesh)
 
 
 def log(msg, level=0):

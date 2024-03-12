@@ -12,6 +12,7 @@ readme = "README.md"
 
 dependencies = [
     "numpy>=1.26.3",
+    "open3d>=0.17.0",
 ]
 
 [tool.setuptools.packages.find]

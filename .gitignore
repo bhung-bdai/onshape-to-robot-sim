@@ -4,6 +4,7 @@ robots
 !robots/skeleton/config.json
 !robots/demo-quadruped/config.json
 data
+onshape_to_sim/onshape_to_sim/onshape_api/test
 **/cache/
 dist
 build

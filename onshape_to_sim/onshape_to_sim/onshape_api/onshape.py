@@ -203,7 +203,8 @@ class Onshape():
         query: dict = {},
         headers: dict = {},
         body: dict = {},
-        base_url: Optional[str] = None
+        base_url: Optional[str] = None,
+        add_api_version: bool = True
         ) -> requests.Response:
         """
         Issues a request to Onshape
@@ -219,7 +220,8 @@ class Onshape():
         Returns:
             Object containing the response from Onshape
         """
-        path = self._api_version + path
+        if add_api_version:
+            path = self._api_version + path
         req_headers = self._make_headers(method, path, query, headers)
         if base_url is None:
             base_url = self._url
@@ -244,11 +246,12 @@ class Onshape():
 
             new_query = {}
             new_base_url = location.scheme + "://" + location.netloc
+            print(new_base_url)
 
             for key in querystring:
                 new_query[key] = querystring[key][0]  # won"t work for repeated query params
 
-            return self.request(method, location.path, query=new_query, headers=headers, base_url=new_base_url)
+            return self.request(method, location.path, query=new_query, headers=headers, base_url=new_base_url, add_api_version=False)
         elif not 200:
             print(url)
             print(f"! ERROR ({res.status_code}) while using OnShape API")

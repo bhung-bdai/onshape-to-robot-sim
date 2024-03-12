@@ -1,16 +1,28 @@
 #!/usr/bin/env python3
 
 from __future__ import annotations
+from typing import Any, Callable, Optional, Sequence, TypeAlias
+
 from collections import deque
 from dataclasses import dataclass, asdict
 from enum import Enum
 import json
-from typing import Any, Callable, Optional, Sequence, TypeAlias
+import os
 
 import numpy as np
 import numpy.typing as npt
 
 from onshape_to_sim.onshape_api.client import Client
+from onshape_to_sim.onshape_api.utils import (
+    APIAttributes,
+    CommonAttributes,
+    ElementAttributes,
+    FeatureAttributes,
+    MassAttributes,
+    OccurrenceAttributes,
+    PartAttributes
+
+)
 from onshape_to_sim.utils import (
     express_mass_properties_in_world_frame
 )
@@ -36,7 +48,10 @@ class CommonAttributes:
     elementId: str = "elementId"
     elementType: str = "type"
     documentMicroversion: str = "documentMicroversion"
+    root: str = "root"
     transform: str = "transform"
+    version: str = "documentVersion"
+    workspace: str = "documentWorkspace"
 
 
 @dataclass
@@ -76,6 +91,7 @@ class MassAttributes():
     mass: str = "mass"
     volume: str = "volume"
 
+
 @dataclass
 class APIAttributes():
     features: str = "features"
@@ -103,15 +119,16 @@ class OnshapeTreeNode():
     """
     def __init__(
         self,
+        name: str,
         depth: int = 0,
         element_dict: Optional[dict] = None,
         node_id: Optional[str] = None,
-        name: Optional[str] = None,
         path: str = "",
         ):
         self.element_dict: Optional[dict] = element_dict
         self.node_id: Optional[str] = node_id
-        self.name: Optional[str] = name
+        self.name: str = name
+        self.simplified_name: str = "".join((self.name.split(" "))[:-1]).lower()
         self.children: list = []
         self.depth: int = depth
         self.path: str = path
@@ -124,9 +141,10 @@ class OnshapeTreeNode():
         self.mass = 0.0
         self.has_mass = False
         self.volume = 0.0
+        self.parts = []
 
     def __repr__(self):
-        return f"{self.name}: {self.node_id} (depth {self.depth})"
+        return f"{self.name} ({self.simplified_name}): {self.node_id} (depth {self.depth})"
 
     def add_child(self, child_node: OnshapeTreeNode) -> None:
         """Append a new node to this node's list of children.""" 
@@ -220,7 +238,6 @@ class OnshapeTreeNode():
 
         self.volume = mass_properties[MassAttributes.volume]
         self.has_mass = mass_properties[MassAttributes.hasMass]
-        print(mass_properties[MassAttributes.mass])
         self.mass, self.com_wrt_world, self.inertia_wrt_world = express_mass_properties_in_world_frame(
             world_tform_element = self.world_tform_element,
             mass = mass_properties[MassAttributes.mass],
@@ -400,7 +417,7 @@ def build_tree(json_assembly_data: dict) -> OnshapeTreeNode:
     """
     root_dict = json_assembly_data[APIAttributes.rootAssembly]
     # TODO see if this is necessary later
-    root_dict[CommonAttributes.name] = "root"
+    root_dict[CommonAttributes.name] = CommonAttributes.root
     root_subassemblies = _build_subassemblies_map(json_assembly_data[APIAttributes.subassemblies])
     root_mates = _build_features_map(root_dict[APIAttributes.features])
     root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
@@ -410,9 +427,7 @@ def build_tree(json_assembly_data: dict) -> OnshapeTreeNode:
         root_instances,
         json_assembly_data[APIAttributes.subassemblies]
         )
-    # print(root_mass_properties)
-    root_node = OnshapeTreeNode(element_dict=root_dict)
-    root_node.name = "root"
+    root_node = OnshapeTreeNode(name=CommonAttributes.name, element_dict=root_dict)
     build_tree_helper(root_node, root_subassemblies, root_mates, root_occurrences, root_mass_properties)
     return root_node
 
@@ -456,33 +471,69 @@ def build_tree_helper(
                 name=instance[CommonAttributes.name],
                 path=next_node.path+occurrence_id
                 )
+            # Add information about the occurrences and mates
             child_node._initialize_node(document_occurrences, document_mates)
+            # Recalculate the COM and inertia with respect to the world frame, given by the occurrence transform
             child_node._add_mass_properties(document_mass_properties)
 
             # Base case: we hit a part. Add the child to the node and skip adding it to the queue
             if instance[CommonAttributes.elementType] == ElementAttributes.part:
                 next_node.add_child(child_node)
-                print(f"Part: {child_node.path}")
+                root.parts.append(child_node)
                 continue
 
             # Recursive case: we hit a subassembly. Add it to the top of the stack with its subassembly data
             child_id = instance[CommonAttributes.elementId]
             child_node.element_dict = document_subassemblies[child_id]
             stack.append(child_node)
-            print(f"Assem: {child_node.path}")
             next_node.add_child(child_node)
+
+
+def download_all_parts_stls(root: OnshapeTreeNode, data_directory: str = ""):
+    parts_seen = set()
+    for part in root.parts:
+        part_data = part.element_dict
+        if CommonAttributes.version in part_data:
+            wvm = "v"
+            wvmid = part_data[CommonAttributes.version]
+        elif CommonAttributes.documentMicroversion in part_data:
+            wvm = "m"
+            wvmid = part_data[CommonAttributes.documentMicroversion]
+        else:
+            wvm = "w"
+            wvmid = part_data[CommonAttributes.workspace]
+        eid = part_data[CommonAttributes.elementId]
+        part_id = part_data[PartAttributes.partId]
+        did = part_data[CommonAttributes.documentId]
+        part_hash = did + "/" + eid + "/" + part_id
+        if part_hash in parts_seen:
+            continue
+        parts_seen.add(part_hash)
+        part_stl = onshape_client.part_export_stl(did=did, wvm=wvm, wvmid=wvmid, eid=eid, part_id=part_id)
+        # TODO: see if we can make the assumption that the part is always followed by a space and a <n>
+        stl_file = "".join((part_data[CommonAttributes.name].split(" "))[:-1]).lower() + ".stl"
+        stl_path = os.path.join(data_directory, stl_file)
+        with open(stl_path, "wb") as stl_file:
+            stl_file.write(part_stl.content)
+        print(stl_path)
 
 
 def main():
     # TODO: add this credentials things (client = Client(creds=""))
-    with open("../test/data/multi_features_sub_assembly.txt", "r") as fi:
-        json_data = json.load(fi)
+    # with open("../test/data/multi_features_sub_assembly.txt", "r") as fi:
+    #     json_data = json.load(fi)
+    json_data = onshape_client.assembly_definition(
+        did="6041e7103bb40af449a81618",
+        wvmid="7e51d7b6b381bd79481e2033",
+        eid="aad7f639435879b7135dce0f",
+        wvm="v",
+        )
+    # print(json_data)
     test = build_tree(json_data)
-    test.print_names()
     test.print_children()
     test.print_joint_info()
-    test.print_transforms()
     test.print_mass_properties()
+    download_all_parts_stls(test, "test")
 
 
 if __name__ == "__main__":
