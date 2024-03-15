@@ -96,7 +96,6 @@ def test_mass_properties_map():
         'MgaIc8LGcDUPIU5f7': {'mass': 0.0, 'hasMass': False, 'volume': 0.00029821187455493096, 'centroid': np.array([-0.04381188, -0.03670293, -0.03739811]),
         'inertia': np.array([[ 1.00443474e-06, -5.08627335e-07, -4.01144826e-07], [-5.08627335e-07,  8.02950958e-07, -4.88390873e-07], [-4.01144826e-07, -4.88390873e-07,  1.03701629e-06]])}
     }
-    print(mass_properties_map)
     assert _check_equality_based_on_type(mass_properties_map, real_map)
 
 

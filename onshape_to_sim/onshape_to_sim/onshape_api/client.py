@@ -93,17 +93,21 @@ class Client():
 
         return self._api.request('delete', 'documents/' + did)
 
-    def get_document(self, did):
+    def get_document(self, did: str):
         """
         Get details for a specified document.
 
         Args:
-            - did (str): Document ID
+            did: Document ID
 
         Returns:
-            - requests.Response: Onshape response data
+            Document information retrieved by the document id
         """
-        return self._api.request('get', 'documents/' + did)
+        json_request = join_api_url(
+            API.documents,
+            did
+        )
+        return self._api.request(API.get_request, json_request).json()
 
     def list_documents(self):
         """

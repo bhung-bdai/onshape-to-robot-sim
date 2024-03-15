@@ -3,1614 +3,414 @@ import json
 
 json_string = """
 {
-  "prev": null,
-  "next": null,
-  "href": "https://cad.onshape.com/api/metadata/d/6041e7103bb40af449a81618/v/ed106544befb4ae92eea036d/e/7a12328807be40cb1472cc52/p?configuration=default",
-  "items": [
-    {
-      "jsonType": "metadata-part",
-      "isMesh": false,
-      "partId": "JHD",
-      "isFlattenedBody": false,
-      "partType": "solid",
-      "meshState": 0,
-      "properties": [
-        {
-          "name": "Appearance",
-          "value": {
-            "color": {
-              "red": 204,
-              "green": 204,
-              "blue": 204
-            },
-            "isGenerated": false,
-            "opacity": 255
-          },
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 3,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d60c",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "OBJECT",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Name",
-          "value": "Body",
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 3,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": 1,
-            "maxLength": 256,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": true,
-          "propertyId": "57f3fb8efa3416c06701d60d",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce0",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Description",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d60e",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce0",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": true
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Category",
-          "value": [
+  "rootAssembly": {
+    "occurrences": [
+      {
+        "hidden": false,
+        "fixed": false,
+        "transform": [
+          1,
+          0,
+          0,
+          0.107,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          -3.469446951953614e-18,
+          0,
+          0,
+          0,
+          1
+        ],
+        "path": [
+          "MmRHXBai4kux8tPcZ"
+        ]
+      },
+      {
+        "hidden": false,
+        "fixed": false,
+        "transform": [
+          1,
+          0,
+          0,
+          0.08927692583203317,
+          0,
+          1,
+          0,
+          0.0741149203106761,
+          0,
+          0,
+          1,
+          0.06335652424022555,
+          0,
+          0,
+          0,
+          1
+        ],
+        "path": [
+          "MrWVPT9IK41t//ORF",
+          "MjXp5OEcWIwYLGGrG"
+        ]
+      },
+      {
+        "hidden": false,
+        "fixed": true,
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "path": [
+          "ME0OGHafV27m4erd3"
+        ]
+      },
+      {
+        "hidden": false,
+        "fixed": false,
+        "transform": [
+          1,
+          0,
+          0,
+          0.004736018538475037,
+          0,
+          1,
+          0,
+          0.03841717142611742,
+          0,
+          0,
+          1,
+          0.09923682259395718,
+          0,
+          0,
+          0,
+          1
+        ],
+        "path": [
+          "MrWVPT9IK41t//ORF",
+          "MmXPaG80Mq0OnEMRb"
+        ]
+      },
+      {
+        "hidden": false,
+        "fixed": false,
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "path": [
+          "MfnXxatwJGOcsLj0q"
+        ]
+      },
+      {
+        "hidden": false,
+        "fixed": false,
+        "transform": [
+          1,
+          0,
+          0,
+          0.025381017476320267,
+          0,
+          1,
+          0,
+          0.06465646903961897,
+          0,
+          0,
+          1,
+          0.07801759289577603,
+          0,
+          0,
+          0,
+          1
+        ],
+        "path": [
+          "MrWVPT9IK41t//ORF"
+        ]
+      }
+    ],
+    "instances": [
+      {
+        "name": "Body <1>",
+        "suppressed": false,
+        "id": "ME0OGHafV27m4erd3",
+        "type": "Part",
+        "isStandardContent": false,
+        "partId": "JHD",
+        "fullConfiguration": "default",
+        "configuration": "default",
+        "documentMicroversion": "4a07df152aba423b55fded1f",
+        "documentId": "6041e7103bb40af449a81618",
+        "elementId": "7a12328807be40cb1472cc52"
+      },
+      {
+        "name": "Wheel <1>",
+        "suppressed": false,
+        "id": "MfnXxatwJGOcsLj0q",
+        "type": "Part",
+        "isStandardContent": false,
+        "partId": "JYD",
+        "fullConfiguration": "default",
+        "configuration": "default",
+        "documentMicroversion": "4a07df152aba423b55fded1f",
+        "documentId": "6041e7103bb40af449a81618",
+        "elementId": "7a12328807be40cb1472cc52"
+      },
+      {
+        "name": "Wheel <2>",
+        "suppressed": false,
+        "id": "MmRHXBai4kux8tPcZ",
+        "type": "Part",
+        "isStandardContent": false,
+        "partId": "JYD",
+        "fullConfiguration": "default",
+        "configuration": "default",
+        "documentMicroversion": "4a07df152aba423b55fded1f",
+        "documentId": "6041e7103bb40af449a81618",
+        "elementId": "7a12328807be40cb1472cc52"
+      },
+      {
+        "name": "Assembly 1 <1>",
+        "suppressed": false,
+        "id": "MrWVPT9IK41t//ORF",
+        "type": "Assembly",
+        "fullConfiguration": "default",
+        "configuration": "default",
+        "documentMicroversion": "4a07df152aba423b55fded1f",
+        "documentId": "6041e7103bb40af449a81618",
+        "elementId": "e252e049abc5c4abd6bfe390"
+      }
+    ],
+    "patterns": [],
+    "features": [
+      {
+        "id": "MrDouGkCkF58Czz6o",
+        "suppressed": false,
+        "featureType": "mate",
+        "featureData": {
+          "mateType": "REVOLUTE",
+          "matedEntities": [
             {
-              "memberCategoryIds": null,
-              "memberCategories": null,
-              "description": "Category created by upgrade",
-              "ownerType": 2,
-              "ownerId": "556f3109e4b00b3fee9a3f4a",
-              "publishState": 1,
-              "objectTypes": [
-                2
+              "matedOccurrence": [
+                "MfnXxatwJGOcsLj0q"
               ],
-              "defaultObjectType": 2,
-              "name": "Onshape Part",
-              "id": "5877a03ebe4c21163b49dce2",
-              "href": null
-            }
-          ],
-          "defaultValue": [
-            {
-              "memberCategoryIds": null,
-              "memberCategories": null,
-              "description": "Category created by upgrade",
-              "ownerType": 2,
-              "ownerId": "556f3109e4b00b3fee9a3f4a",
-              "publishState": 1,
-              "objectTypes": [
-                2
-              ],
-              "defaultObjectType": 2,
-              "name": "Onshape Part",
-              "id": "5877a03ebe4c21163b49dce2",
-              "href": null
-            }
-          ],
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d625",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "CATEGORY",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce0",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Part number",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 128,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d60f",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Revision",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d610",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "State",
-          "value": "0",
-          "defaultValue": "0",
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": true,
-          "propertyId": "57f3fb8efa3416c06701d611",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "ENUM",
-          "enumValues": [
-            {
-              "value": "0",
-              "state": 0,
-              "label": "In progress"
-            },
-            {
-              "value": "1",
-              "state": 0,
-              "label": "Pending"
-            },
-            {
-              "value": "2",
-              "state": 0,
-              "label": "Released"
-            },
-            {
-              "value": "3",
-              "state": 0,
-              "label": "Obsolete"
-            },
-            {
-              "value": "4",
-              "state": 0,
-              "label": "Rejected"
-            },
-            {
-              "value": "5",
-              "state": 0,
-              "label": "Discarded"
-            }
-          ],
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Vendor",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d612",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Project",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d613",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Product line",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d614",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Material",
-          "value": {
-            "properties": [
-              {
-                "name": "DENS",
-                "value": "8030",
-                "type": "REAL",
-                "displayName": "Density",
-                "units": "kg/m^3",
-                "category": "Physical",
-                "description": "Density"
+              "matedCS": {
+                "xAxis": [
+                  0,
+                  1,
+                  0
+                ],
+                "yAxis": [
+                  0,
+                  0,
+                  -1
+                ],
+                "zAxis": [
+                  -1,
+                  0,
+                  0
+                ],
+                "origin": [
+                  -0.02,
+                  0.0325,
+                  0.024999999999999998
+                ]
               }
-            ],
-            "id": "A2 Stainless Steel",
-            "displayName": "A2 Stainless Steel",
-            "libraryName": "Onshape Material Library",
-            "libraryReference": {
-              "versionId": "e0c061103dc54e43d0f4f92c",
-              "documentId": "2718281828459eacfeeda11f",
-              "elementId": "6bbab304a1f64e7d640a2d7d",
-              "elementMicroversionId": "3ddb8491f577da0c2d4166ea"
-            }
-          },
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 3,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d615",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "OBJECT",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Title 1",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d616",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Title 2",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d617",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Title 3",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d618",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Not revision managed",
-          "value": false,
-          "defaultValue": false,
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d61d",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "BOOL",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Exclude from BOM",
-          "value": false,
-          "defaultValue": false,
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d61e",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "BOOL",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Unit of measure",
-          "value": "Each",
-          "defaultValue": "Each",
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d623",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "ENUM",
-          "enumValues": [
-            {
-              "value": "Centimeter",
-              "state": 0,
-              "label": null
             },
             {
-              "value": "Foot",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Inch",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Meter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Millimeter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Yard",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Gram",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Kilogram",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Ounce",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Pound",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Liter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Gallon",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Each",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Fluid ounce",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Milliliter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Centiliter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Package",
-              "state": 0,
-              "label": null
+              "matedOccurrence": [
+                "ME0OGHafV27m4erd3"
+              ],
+              "matedCS": {
+                "xAxis": [
+                  0,
+                  1,
+                  0
+                ],
+                "yAxis": [
+                  0,
+                  0,
+                  -1
+                ],
+                "zAxis": [
+                  -1,
+                  0,
+                  0
+                ],
+                "origin": [
+                  -0.02,
+                  0.0325,
+                  0.024999999999999998
+                ]
+              }
             }
           ],
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Mass",
-          "value": {
-            "formattedValue": "2.239 kg",
-            "computed": 2.238744814460115,
-            "useOverride": false
-          },
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 7,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": null,
-            "pattern": null,
-            "quantityType": 5,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d626",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "COMPUTED",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": true,
-          "uiHints": null,
-          "propertyOverrideStatus": 2
-        },
-        {
-          "name": "Center of mass",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d627",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "COMPUTED",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Inertia",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d628",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "COMPUTED",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Tessellation quality",
-          "value": "0",
-          "defaultValue": "0",
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": true,
-          "propertyId": "5ace8269c046ad612c65a0bb",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "ENUM",
-          "enumValues": [
+          "name": "dof_wheel1_speed"
+        }
+      },
+      {
+        "id": "M9gO1QTJQd+MmTzeX",
+        "suppressed": false,
+        "featureType": "mate",
+        "featureData": {
+          "mateType": "REVOLUTE",
+          "matedEntities": [
             {
-              "value": "0",
-              "state": 0,
-              "label": "Auto"
+              "matedOccurrence": [
+                "MmRHXBai4kux8tPcZ"
+              ],
+              "matedCS": {
+                "xAxis": [
+                  0,
+                  1,
+                  0
+                ],
+                "yAxis": [
+                  0,
+                  0,
+                  1
+                ],
+                "zAxis": [
+                  1,
+                  0,
+                  0
+                ],
+                "origin": [
+                  -0.012,
+                  0.032499999999999994,
+                  0.024999999999999998
+                ]
+              }
             },
             {
-              "value": "1",
-              "state": 0,
-              "label": "Coarse"
-            },
-            {
-              "value": "2",
-              "state": 0,
-              "label": "Medium"
-            },
-            {
-              "value": "3",
-              "state": 0,
-              "label": "Fine"
-            },
-            {
-              "value": "4",
-              "state": 0,
-              "label": "Very fine"
+              "matedOccurrence": [
+                "ME0OGHafV27m4erd3"
+              ],
+              "matedCS": {
+                "xAxis": [
+                  0,
+                  1,
+                  0
+                ],
+                "yAxis": [
+                  0,
+                  0,
+                  1
+                ],
+                "zAxis": [
+                  1,
+                  0,
+                  0
+                ],
+                "origin": [
+                  0.095,
+                  0.0325,
+                  0.024999999999999998
+                ]
+              }
             }
           ],
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
+          "name": "dof_wheel2_speed_inv"
+        }
+      }
+    ],
+    "fullConfiguration": "default",
+    "configuration": "default",
+    "documentMicroversion": "4a07df152aba423b55fded1f",
+    "documentId": "6041e7103bb40af449a81618",
+    "elementId": "aad7f639435879b7135dce0f"
+  },
+  "subAssemblies": [
+    {
+      "instances": [
+        {
+          "name": "Wheel <1>",
+          "suppressed": false,
+          "id": "MmXPaG80Mq0OnEMRb",
+          "type": "Part",
+          "isStandardContent": false,
+          "partId": "JYD",
+          "fullConfiguration": "default",
+          "configuration": "default",
+          "documentMicroversion": "4a07df152aba423b55fded1f",
+          "documentId": "6041e7103bb40af449a81618",
+          "elementId": "7a12328807be40cb1472cc52"
+        },
+        {
+          "name": "Wheel <2>",
+          "suppressed": false,
+          "id": "MjXp5OEcWIwYLGGrG",
+          "type": "Part",
+          "isStandardContent": false,
+          "partId": "JYD",
+          "fullConfiguration": "default",
+          "configuration": "default",
+          "documentMicroversion": "4a07df152aba423b55fded1f",
+          "documentId": "6041e7103bb40af449a81618",
+          "elementId": "7a12328807be40cb1472cc52"
         }
       ],
-      "href": "https://cad.onshape.com/api/metadata/d/6041e7103bb40af449a81618/v/ed106544befb4ae92eea036d/e/7a12328807be40cb1472cc52/p/JHD?configuration=default"
+      "patterns": [],
+      "features": [],
+      "fullConfiguration": "default",
+      "configuration": "default",
+      "documentMicroversion": "4a07df152aba423b55fded1f",
+      "documentId": "6041e7103bb40af449a81618",
+      "elementId": "e252e049abc5c4abd6bfe390"
+    }
+  ],
+  "parts": [
+    {
+      "isStandardContent": false,
+      "partId": "JYD",
+      "bodyType": "solid",
+      "fullConfiguration": "default",
+      "configuration": "default",
+      "documentMicroversion": "4a07df152aba423b55fded1f",
+      "documentId": "6041e7103bb40af449a81618",
+      "elementId": "7a12328807be40cb1472cc52"
     },
     {
-      "jsonType": "metadata-part",
-      "isMesh": false,
-      "partId": "JYD",
-      "partIdentity": "cdfb271be2a3d06a9bff3193",
-      "isFlattenedBody": false,
-      "partType": "solid",
-      "meshState": 0,
-      "properties": [
-        {
-          "name": "Appearance",
-          "value": {
-            "color": {
-              "red": 67,
-              "green": 72,
-              "blue": 77
-            },
-            "isGenerated": false,
-            "opacity": 255
-          },
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 3,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d60c",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "OBJECT",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Name",
-          "value": "Wheel",
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 3,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": 1,
-            "maxLength": 256,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": true,
-          "propertyId": "57f3fb8efa3416c06701d60d",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce0",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Description",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d60e",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce0",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": true
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Category",
-          "value": [
-            {
-              "memberCategoryIds": null,
-              "memberCategories": null,
-              "description": "Category created by upgrade",
-              "ownerType": 2,
-              "ownerId": "556f3109e4b00b3fee9a3f4a",
-              "publishState": 1,
-              "objectTypes": [
-                2
-              ],
-              "defaultObjectType": 2,
-              "name": "Onshape Part",
-              "id": "5877a03ebe4c21163b49dce2",
-              "href": null
-            }
-          ],
-          "defaultValue": [
-            {
-              "memberCategoryIds": null,
-              "memberCategories": null,
-              "description": "Category created by upgrade",
-              "ownerType": 2,
-              "ownerId": "556f3109e4b00b3fee9a3f4a",
-              "publishState": 1,
-              "objectTypes": [
-                2
-              ],
-              "defaultObjectType": 2,
-              "name": "Onshape Part",
-              "id": "5877a03ebe4c21163b49dce2",
-              "href": null
-            }
-          ],
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d625",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "CATEGORY",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce0",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Part number",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 128,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d60f",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Revision",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d610",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "State",
-          "value": "0",
-          "defaultValue": "0",
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": true,
-          "propertyId": "57f3fb8efa3416c06701d611",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "ENUM",
-          "enumValues": [
-            {
-              "value": "0",
-              "state": 0,
-              "label": "In progress"
-            },
-            {
-              "value": "1",
-              "state": 0,
-              "label": "Pending"
-            },
-            {
-              "value": "2",
-              "state": 0,
-              "label": "Released"
-            },
-            {
-              "value": "3",
-              "state": 0,
-              "label": "Obsolete"
-            },
-            {
-              "value": "4",
-              "state": 0,
-              "label": "Rejected"
-            },
-            {
-              "value": "5",
-              "state": 0,
-              "label": "Discarded"
-            }
-          ],
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Vendor",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d612",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Project",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d613",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Product line",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d614",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Material",
-          "value": {
-            "properties": [
-              {
-                "name": "DENS",
-                "value": "7740",
-                "type": "REAL",
-                "displayName": "Density",
-                "units": "kg/m^3",
-                "category": "Physical",
-                "description": "Density"
-              }
-            ],
-            "id": "Stainless Steel",
-            "displayName": "Stainless Steel",
-            "libraryName": "Onshape Material Library",
-            "libraryReference": {
-              "versionId": "e0c061103dc54e43d0f4f92c",
-              "documentId": "2718281828459eacfeeda11f",
-              "elementId": "6bbab304a1f64e7d640a2d7d",
-              "elementMicroversionId": "3ddb8491f577da0c2d4166ea"
-            }
-          },
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 3,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d615",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "OBJECT",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Title 1",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d616",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Title 2",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d617",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Title 3",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": 10000,
-            "pattern": null,
-            "quantityType": null,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d618",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "STRING",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": {
-            "multiline": false
-          },
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Not revision managed",
-          "value": false,
-          "defaultValue": false,
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d61d",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "BOOL",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Exclude from BOM",
-          "value": false,
-          "defaultValue": false,
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d61e",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "BOOL",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Unit of measure",
-          "value": "Each",
-          "defaultValue": "Each",
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d623",
-          "editable": true,
-          "editableInUi": true,
-          "dateFormat": null,
-          "valueType": "ENUM",
-          "enumValues": [
-            {
-              "value": "Centimeter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Foot",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Inch",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Meter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Millimeter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Yard",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Gram",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Kilogram",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Ounce",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Pound",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Liter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Gallon",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Each",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Fluid ounce",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Milliliter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Centiliter",
-              "state": 0,
-              "label": null
-            },
-            {
-              "value": "Package",
-              "state": 0,
-              "label": null
-            }
-          ],
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Mass",
-          "value": {
-            "formattedValue": "0.335 kg",
-            "computed": 0.33541920259867763,
-            "useOverride": false
-          },
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 7,
-          "validator": {
-            "min": null,
-            "max": null,
-            "minLength": null,
-            "maxLength": null,
-            "pattern": null,
-            "quantityType": 5,
-            "maxCount": null,
-            "minCount": null,
-            "minDate": null,
-            "maxDate": null
-          },
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d626",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "COMPUTED",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": true,
-          "uiHints": null,
-          "propertyOverrideStatus": 2
-        },
-        {
-          "name": "Center of mass",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d627",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "COMPUTED",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Inertia",
-          "value": null,
-          "defaultValue": null,
-          "computedPropertyError": null,
-          "propertySource": 0,
-          "validator": null,
-          "required": false,
-          "propertyId": "57f3fb8efa3416c06701d628",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "COMPUTED",
-          "enumValues": null,
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        },
-        {
-          "name": "Tessellation quality",
-          "value": "0",
-          "defaultValue": "0",
-          "computedPropertyError": null,
-          "propertySource": 6,
-          "validator": null,
-          "required": true,
-          "propertyId": "5ace8269c046ad612c65a0bb",
-          "editable": false,
-          "editableInUi": false,
-          "dateFormat": null,
-          "valueType": "ENUM",
-          "enumValues": [
-            {
-              "value": "0",
-              "state": 0,
-              "label": "Auto"
-            },
-            {
-              "value": "1",
-              "state": 0,
-              "label": "Coarse"
-            },
-            {
-              "value": "2",
-              "state": 0,
-              "label": "Medium"
-            },
-            {
-              "value": "3",
-              "state": 0,
-              "label": "Fine"
-            },
-            {
-              "value": "4",
-              "state": 0,
-              "label": "Very fine"
-            }
-          ],
-          "schemaId": "5877a03ebe4c21163b49dce2",
-          "multivalued": false,
-          "computedAssemblyProperty": false,
-          "computedProperty": false,
-          "uiHints": null,
-          "propertyOverrideStatus": 0
-        }
-      ],
-      "href": "https://cad.onshape.com/api/metadata/d/6041e7103bb40af449a81618/v/ed106544befb4ae92eea036d/e/7a12328807be40cb1472cc52/p/JYD/pi/cdfb271be2a3d06a9bff3193?configuration=default"
+      "isStandardContent": false,
+      "partId": "JHD",
+      "bodyType": "solid",
+      "fullConfiguration": "default",
+      "configuration": "default",
+      "documentMicroversion": "4a07df152aba423b55fded1f",
+      "documentId": "6041e7103bb40af449a81618",
+      "elementId": "7a12328807be40cb1472cc52"
     }
-  ]
+  ],
+  "partStudioFeatures": []
 }
 """
 

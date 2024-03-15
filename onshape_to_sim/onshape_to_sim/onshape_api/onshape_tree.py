@@ -21,12 +21,12 @@ from onshape_to_sim.onshape_api.utils import (
     MassAttributes,
     OccurrenceAttributes,
     PartAttributes
-
 )
 from onshape_to_sim.utils import (
     express_mass_properties_in_world_frame
 )
 
+# TODO: figure out if this is going to be here later
 onshape_client = Client(creds="test_config.json", logging=False)
 
 
@@ -335,7 +335,7 @@ def _build_occurrences_map(occurrences: list) -> dict:
     return occurrences_map
         
 
-def build_tree(json_assembly_data: dict) -> OnshapeTreeNode:
+def build_tree(json_assembly_data: dict, robot_name: str) -> OnshapeTreeNode:
     """Given a JSON Onshape API call for the elements in an assembly, return a tree representing the entire assembly.
     
     Args:
@@ -356,7 +356,7 @@ def build_tree(json_assembly_data: dict) -> OnshapeTreeNode:
         root_instances,
         json_assembly_data[APIAttributes.subassemblies]
         )
-    root_node = OnshapeTreeNode(name=CommonAttributes.name, element_dict=root_dict)
+    root_node = OnshapeTreeNode(name=robot_name, element_dict=root_dict)
     build_tree_helper(root_node, root_subassemblies, root_mates, root_occurrences, root_mass_properties)
     return root_node
 
@@ -451,18 +451,28 @@ def main():
     # TODO: add this credentials things (client = Client(creds=""))
     # with open("../test/data/multi_features_sub_assembly.txt", "r") as fi:
     #     json_data = json.load(fi)
+    # did = "6041e7103bb40af449a81618"
+    # wvmid = "7e51d7b6b381bd79481e2033"
+    # eid = "aad7f639435879b7135dce0f"
+    # wvm = "v"
+    did = "6041e7103bb40af449a81618"
+    wvmid = "c2b97e27ae79800583728209"
+    eid = "aad7f639435879b7135dce0f"
+    wvm = "v"
+    document_name = onshape_client.get_document(did=did)[CommonAttributes.name]
     json_data = onshape_client.assembly_definition(
-        did="6041e7103bb40af449a81618",
-        wvmid="7e51d7b6b381bd79481e2033",
-        eid="aad7f639435879b7135dce0f",
-        wvm="v",
+        did=did,
+        wvmid=wvmid,
+        eid=eid,
+        wvm=wvm,
         )
-    # print(json_data)
-    test = build_tree(json_data)
+    # # print(json_data)
+    test = build_tree(json_data, robot_name=document_name)
     test.print_children()
     test.print_joint_info()
     test.print_mass_properties()
-    download_all_parts_stls(test, "test")
+    print(test.parts)
+    # download_all_parts_stls(test, "test")
 
 
 if __name__ == "__main__":
