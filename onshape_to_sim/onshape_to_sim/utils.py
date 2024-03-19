@@ -37,6 +37,29 @@ def pose(se3_matrix: npt.ArrayLike) -> npt.ArrayLike:
     rpy = rotationMatrixToEulerAngles(se3_matrix)
     return np.concatenate((xyz, rpy), axis=0)
 
+# def rotation_matrix_to_axis_angle(R: npt.ArrayLike) -> npt.ArrayLike:
+#     """Converts a rotation matrix to an axis angle representation.
+
+#     The axis is the eigenvector corresponding to 1 while the angle is found by:
+#         1 + 2 cos (theta) = trace(R)
+    
+#     Args:
+#         R: 3x3 rotation matrix
+
+#     Raises:
+#         ValueError if the rotation matrix is unable to find an eigenvalue 
+#         close to 1, suggesting it may be malformed
+#     """
+#     eig_vals_r, eig_vecs_r = np.linalg.eig(R)
+#     axis_inds = np.where(np.is_close(eig_vals_r, 1.0))[0]
+#     if len(axis_inds) == 0:
+#         raise ValueError(f"Rotation matrix {R} has no eigenvalue equal to 1!")
+#     # Pick that index and find the eigenvector/value
+#     # 
+#     axis = axis_inds[0][0]
+
+    
+
 # TODO Look into seeing if we need to express other properties in relative frames. This has the world one
 def express_mass_properties_in_world_frame(
     world_tform_element: npt.ArrayLike,

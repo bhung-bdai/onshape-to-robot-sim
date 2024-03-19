@@ -86,6 +86,7 @@ class FeatureAttributes():
     matedCS: str = "matedCS"
     origin: str = "origin"
     parent: str = "parent"
+    transform: str = "transform"
     xAxis: str = "xAxis"
     yAxis: str = "yAxis"
     zAxis: str = "zAxis"

@@ -44,7 +44,7 @@ class OnshapeTreeNode():
 
     The root of the tree is the root of the assembly. Children of each node are either subassemblies or parts.
     Leaves are guaranteed to be parts, while branches are guaranteed to be assemblies. The information each mate/joints
-    if stored in every single instance which is inside that mate.
+    if stored in every single instance which is inside that mate. The root has
     """
     def __init__(
         self,
@@ -62,7 +62,7 @@ class OnshapeTreeNode():
         self.depth: int = depth
         self.path: str = path
         self.hidden: bool = False
-        self.joint_info: Optional[dict] = None
+        # self.joint_child_info: list = []
         self.world_tform_element: npt.ArrayLike = np.eye(4)
         self.element_tform_mate: Optional[npt.ArrayLike] = None
         self.com_wrt_world = np.zeros((3,))
@@ -70,10 +70,14 @@ class OnshapeTreeNode():
         self.mass = 0.0
         self.has_mass = False
         self.volume = 0.0
-        self.parts = []
+        self.links = [] # For root only
+        self.parts = [] # For root only
+        self.occurrence_id_to_node = {} # For root only
+        self.internal_naming = {} # For root only
+        self.parent_nodes = {} # For root only TODO rename this
 
     def __repr__(self):
-        return f"{self.name} ({self.simplified_name}): {self.node_id} (depth {self.depth})"
+        return f"{self.name} ({self.simplified_name}): {self.path} (depth {self.depth})"
 
     def add_child(self, child_node: OnshapeTreeNode) -> None:
         """Append a new node to this node's list of children.""" 
@@ -100,12 +104,12 @@ class OnshapeTreeNode():
         for child in self.children:
             child.print_transforms()
 
-    def print_joint_info(self):
-        """Print nodes followed by their joint information"""
-        print(f"{self}", end=": ")
-        print(f"{self.joint_info}")
-        for child in self.children:
-            child.print_joint_info()
+    # def print_joint_info(self):
+    #     """Print nodes followed by their joint information"""
+    #     print(f"{self}", end=": ")
+    #     print(f"{self.joint_info}")
+    #     for child in self.children:
+    #         child.print_joint_info()
 
     def print_names(self):
         """Print nodes"""
@@ -123,10 +127,11 @@ class OnshapeTreeNode():
     def _initialize_node(
         self,
         occurrence_map: dict,
-        joint_map: dict
+        joint_map: dict,
+        parent_nodes: dict,
         ) -> None:
         self._add_occurrence_info(occurrence_map)
-        self._add_joint_info(joint_map)
+        self._add_joint_info(joint_map, parent_nodes)
     
     def _add_occurrence_info(self, occurrence_map: dict,) -> None:
         """Adds the information about the occurrence with the path and transform into the element.
@@ -142,7 +147,7 @@ class OnshapeTreeNode():
         self.world_tform_element = np.array(occurrence[CommonAttributes.transform]).reshape(4, 4)
         self.hidden = bool(occurrence[OccurrenceAttributes.hidden])
 
-    def _add_joint_info(self, joint_map: dict) -> None:
+    def _add_joint_info(self, joint_map: dict, parent_nodes: dict) -> None:
         """Get the mates associated with the node from the dictionary and store them here.
 
         Currently I think only parts can be done this way, so we only store joint information on a per-part basis.
@@ -150,9 +155,16 @@ class OnshapeTreeNode():
         Args:
             joint_map: a mapping of occurrence ids and their feature information
         """
-        if self.node_id is not None and self.node_id in joint_map:
-            self.joint_info = joint_map[self.node_id]
-            # self.element_tform_mate = get_element_tform_mate(self.joint_info)
+        # TODO: explain all this nonsense
+        if self.path is None or self.path not in joint_map:
+            return
+        for joint in joint_map[self.path]:
+            if not joint[FeatureAttributes.is_parent]:
+                continue
+            if self.name not in parent_nodes:
+                parent_nodes[self.name] = [joint]
+            else:
+                parent_nodes[self.name].append(joint)
 
     def _add_mass_properties(self, mass_properties_map: dict) -> None:
         """Adds information about the mass, com, and inertia into the element.
@@ -279,6 +291,7 @@ def _build_features_map(features: list) -> dict:
     for feature in features:
         mated_entities = feature[FeatureAttributes.featureData][FeatureAttributes.matedEntities]
         mate_type = feature[FeatureAttributes.featureData][FeatureAttributes.mateType]
+        mate_name = feature[FeatureAttributes.featureData][CommonAttributes.name]
         # TODO @bhung figure out if the assumption that the parent is the final entity is true
         # Loop through the n - 1 children and added them
         parent_entity = mated_entities[-1]
@@ -286,7 +299,8 @@ def _build_features_map(features: list) -> dict:
         parent_info = {
             FeatureAttributes.children: [],
             FeatureAttributes.is_parent: True,
-            FeatureAttributes.mateType: mate_type
+            FeatureAttributes.mateType: mate_type,
+            CommonAttributes.name: mate_name, 
         }
         for i in range(len(mated_entities) - 1):
             # Initialize the child information
@@ -384,7 +398,7 @@ def build_tree_helper(
         next_node = stack.pop()
         next_element = next_node.element_dict
         # From the document holding the information about mates, add it in
-        next_node._initialize_node(document_occurrences, document_mates)
+        next_node._initialize_node(document_occurrences, document_mates, root.parent_nodes)
         if is_root_node:
             is_root_node = False
         else:
@@ -393,21 +407,29 @@ def build_tree_helper(
         for instance in next_element[APIAttributes.instances]:
             # Create a child node
             occurrence_id = instance[CommonAttributes.idNum]
+            instance_name = instance[CommonAttributes.name]
+            # Check if we've seen this element name. If so, assign a unique name and add it
+            if instance_name not in root.internal_naming:
+                root.internal_naming[instance_name] = 0
+            else:
+                root.internal_naming[instance_name] += 1
             child_node = OnshapeTreeNode(
                 depth=next_node.depth+1,
                 element_dict=instance,
                 node_id=occurrence_id,
-                name=instance[CommonAttributes.name],
+                name=f"{instance_name} {root.internal_naming[instance_name]}",
                 path=next_node.path+occurrence_id
                 )
+            root.occurrence_id_to_node[child_node.path] = child_node
             # Add information about the occurrences and mates
-            child_node._initialize_node(document_occurrences, document_mates)
-            # Recalculate the COM and inertia with respect to the world frame, given by the occurrence transform
+            child_node._initialize_node(document_occurrences, document_mates, root.parent_nodes)
+            # Recalculate the COM and inertia wrt world frame, given by occurrence transform
             child_node._add_mass_properties(document_mass_properties)
 
             # Base case: we hit a part. Add the child to the node and skip adding it to the queue
             if instance[CommonAttributes.elementType] == ElementAttributes.part:
                 next_node.add_child(child_node)
+                root.links.append(child_node)
                 root.parts.append(child_node)
                 continue
 
@@ -419,6 +441,7 @@ def build_tree_helper(
 
 
 def download_all_parts_stls(root: OnshapeTreeNode, data_directory: str = ""):
+    """Downloads the STL associated with each part inside the document."""
     parts_seen = set()
     for part in root.parts:
         part_data = part.element_dict
@@ -444,7 +467,17 @@ def download_all_parts_stls(root: OnshapeTreeNode, data_directory: str = ""):
         stl_path = os.path.join(data_directory, stl_file)
         with open(stl_path, "wb") as stl_file:
             stl_file.write(part_stl.content)
-        print(stl_path)
+
+
+def create_onshape_tree(did: str, wvmid: str, eid: str, wvm: str) -> OnshapeTreeNode:
+    document_name = onshape_client.get_document(did=did)[CommonAttributes.name]
+    json_data = onshape_client.assembly_definition(
+        did=did,
+        wvmid=wvmid,
+        eid=eid,
+        wvm=wvm,
+        )
+    return build_tree(json_data, robot_name=document_name)
 
 
 def main():
@@ -456,22 +489,25 @@ def main():
     # eid = "aad7f639435879b7135dce0f"
     # wvm = "v"
     did = "6041e7103bb40af449a81618"
-    wvmid = "c2b97e27ae79800583728209"
+    wvmid = "78ea070002f23f4d1dd11250"
     eid = "aad7f639435879b7135dce0f"
     wvm = "v"
-    document_name = onshape_client.get_document(did=did)[CommonAttributes.name]
-    json_data = onshape_client.assembly_definition(
-        did=did,
-        wvmid=wvmid,
-        eid=eid,
-        wvm=wvm,
-        )
-    # # print(json_data)
-    test = build_tree(json_data, robot_name=document_name)
-    test.print_children()
-    test.print_joint_info()
-    test.print_mass_properties()
-    print(test.parts)
+    test = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid)
+    # document_name = onshape_client.get_document(did=did)[CommonAttributes.name]
+    # json_data = onshape_client.assembly_definition(
+    #     did=did,
+    #     wvmid=wvmid,
+    #     eid=eid,
+    #     wvm=wvm,
+    #     )
+    # # # print(json_data)
+    # test = build_tree(json_data, robot_name=document_name)
+    # test.print_children()
+    print(test.parent_nodes)
+    # No long implemented: test.print_joint_info()
+    # test.print_mass_properties()
+    # print(test.parts)
+    # print(test.occurrence_id_to_node)
     # download_all_parts_stls(test, "test")
 
 
