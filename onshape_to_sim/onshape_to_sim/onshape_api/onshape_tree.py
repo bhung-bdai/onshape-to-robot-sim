@@ -57,7 +57,8 @@ class OnshapeTreeNode():
         self.element_dict: Optional[dict] = element_dict
         self.node_id: Optional[str] = node_id
         self.name: str = name
-        self.simplified_name: str = "".join((self.name.split(" "))[:-1]).lower()
+        self.mesh_name: str = "".join((self.name.split(" "))[0]).lower()
+        self.simplified_name: str = self._simplified_name()
         self.children: list = []
         self.depth: int = depth
         self.path: str = path
@@ -75,6 +76,17 @@ class OnshapeTreeNode():
         self.occurrence_id_to_node = {} # For root only
         self.internal_naming = {} # For root only
         self.parent_nodes = {} # For root only TODO rename this
+
+    def _simplified_name(self):
+        simple_name = ""
+        for char in self.name:
+            if char == "<" or char == ">":
+                continue
+            elif char == " ":
+                simple_name += "_"
+            else:
+                simple_name += char.lower()
+        return simple_name
 
     def __repr__(self):
         return f"{self.name} ({self.simplified_name}): {self.path} (depth {self.depth})"
@@ -161,10 +173,10 @@ class OnshapeTreeNode():
         for joint in joint_map[self.path]:
             if not joint[FeatureAttributes.is_parent]:
                 continue
-            if self.name not in parent_nodes:
-                parent_nodes[self.name] = [joint]
+            if self.simplified_name not in parent_nodes:
+                parent_nodes[self.simplified_name] = [joint]
             else:
-                parent_nodes[self.name].append(joint)
+                parent_nodes[self.simplified_name].append(joint)
 
     def _add_mass_properties(self, mass_properties_map: dict) -> None:
         """Adds information about the mass, com, and inertia into the element.
@@ -469,15 +481,22 @@ def download_all_parts_stls(root: OnshapeTreeNode, data_directory: str = ""):
             stl_file.write(part_stl.content)
 
 
-def create_onshape_tree(did: str, wvmid: str, eid: str, wvm: str) -> OnshapeTreeNode:
-    document_name = onshape_client.get_document(did=did)[CommonAttributes.name]
+def create_onshape_tree(
+    did: str,
+    wvmid: str,
+    eid: str,
+    wvm: str,
+    robot_name: Optional[str] = None
+    ) -> OnshapeTreeNode:
+    if robot_name is None:
+        robot_name = onshape_client.get_document(did=did)[CommonAttributes.name]
     json_data = onshape_client.assembly_definition(
         did=did,
         wvmid=wvmid,
         eid=eid,
         wvm=wvm,
         )
-    return build_tree(json_data, robot_name=document_name)
+    return build_tree(json_data, robot_name=robot_name)
 
 
 def main():
@@ -489,7 +508,7 @@ def main():
     # eid = "aad7f639435879b7135dce0f"
     # wvm = "v"
     did = "6041e7103bb40af449a81618"
-    wvmid = "78ea070002f23f4d1dd11250"
+    wvmid = "cddf1867f39445633530cda9"
     eid = "aad7f639435879b7135dce0f"
     wvm = "v"
     test = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid)
@@ -502,10 +521,10 @@ def main():
     #     )
     # # # print(json_data)
     # test = build_tree(json_data, robot_name=document_name)
-    # test.print_children()
-    print(test.parent_nodes)
+    test.print_children()
+    # print(test.parent_nodes)
     # No long implemented: test.print_joint_info()
-    # test.print_mass_properties()
+    test.print_mass_properties()
     # print(test.parts)
     # print(test.occurrence_id_to_node)
     # download_all_parts_stls(test, "test")

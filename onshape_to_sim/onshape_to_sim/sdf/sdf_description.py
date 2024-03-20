@@ -205,17 +205,18 @@ def make_visual_object(
     return visual
 
 
-def mesh_filepath(robot_name: str, mesh_name: str) -> str:
-    return f"file://{robot_name}//{mesh_name}.obj"
+def mesh_filepath(robot_name: str, mesh_name: str, mesh_directory: str) -> str:
+    return f"file://{mesh_directory}/{robot_name}/{mesh_name}.obj"
 
 
 class RobotSDF():
 
     world_frame: str = "world_frame"
 
-    def __init__(self, onshape_root: OnshapeTreeNode):
+    def __init__(self, onshape_root: OnshapeTreeNode, mesh_directory: str):
         self.robot_name = onshape_root.name
         self.sdf_root = Root()
+        self.mesh_directory = mesh_directory
         model = Model()
         model.set_name(self.robot_name)
         model.add_frame(make_frame_object(self.world_frame))
@@ -234,7 +235,7 @@ class RobotSDF():
                 joint_sdf.set_type(JointType(gz_mate_type))
                 # Set the joint to be linked to the parent and the child links
                 joint_sdf.set_parent_name(parent_link)
-                joint_sdf.set_child_name(child_node.name)
+                joint_sdf.set_child_name(child_node.simplified_name)
                 # Add the pose of the joint
                 # The transform is given wrt to the world (I think) so we extract/set pose
                 joint_transform = joint[FeatureAttributes.transform]
@@ -264,37 +265,55 @@ class RobotSDF():
                         pass
                 self.sdf_root.model().add_joint(joint_sdf)
 
-
     def add_link(self, node: OnshapeTreeNode) -> None:
         """Adds a link if a node specifies that it should be a link."""
         link_sdf = Link()
         # A node name is not guaranteed to be unique, so we need to keep tally
-        link_sdf.set_name(node.name)
+        link_sdf.set_name(node.simplified_name)
         # Create the pose wrt the world frame and set it to the link
         world_r_link = node.world_tform_element[:3, :3]
         rpy = rotationMatrixToEulerAngles(world_r_link)
         com_in_world_gz = make_pose_gz(node.com_wrt_world, rpy)
-        link_sdf.set_raw_pose(com_in_world_gz)
+        # TODO!!! Figure out why this should always be 0
+        # link_sdf.set_raw_pose(com_in_world_gz)
         # Create the inertial element
-        inertia_in_world_gz = make_inertial_gz(node.mass, node.inertia_wrt_world)
+        inertia_in_world_gz = make_inertial_gz(node.mass, node.inertia_wrt_world, np.hstack((node.com_wrt_world, rpy)))
         link_sdf.set_inertial(inertia_in_world_gz)
-        mesh_uri = mesh_filepath(self.robot_name, node.simplified_name)
-        collision_sdf = make_collision_object(
-            node.name + "_collision",
-            mesh_uri
-            )
-        link_sdf.add_collision(collision_sdf)
+        mesh_uri = mesh_filepath(self.robot_name, node.mesh_name, self.mesh_directory)
+        # print(mesh_uri)
+        # TODO: Drake appears to fail with the collision object for some reason?
+        # collision_sdf = make_collision_object(
+        #     node.simplified_name + "_collision",
+        #     mesh_uri
+        # )
+        # collision_sdf.set_raw_pose(com_in_world_gz)
+        # link_sdf.add_collision(collision_sdf)
         # TODO: get all of the colors and make the visuals
         material_sdf = self.get_material(node)
         visual_sdf = make_visual_object(
-            node.name + "_visual",
+            node.simplified_name + "_visual",
             mesh_uri,
         )
+        # TODO figure out why the visual is not correctly set
+        visual_pose_in_world_gz = make_pose_gz(
+            node.world_tform_element[:3, 3],
+            rotationMatrixToEulerAngles(node.world_tform_element[:3, :3])
+        )
+        visual_sdf.set_raw_pose(visual_pose_in_world_gz)
+        # visual_sdf.set_raw_pose(com_in_world_gz)
+        # TODO!!! The pose isn't being calculated properly. 
         visual_sdf.set_material(material_sdf)
         link_sdf.add_visual(visual_sdf)
+
+        # TODO!!! Open3d stl not working, need to get .objs
         
         # Add the link to the the model
         self.sdf_root.model().add_link(link_sdf)
+        # Add a frame associated with the link
+        frame_sdf = Frame()
+        frame_sdf.set_name(node.simplified_name + "_frame")
+        frame_sdf.set_attached_to(link_sdf.name())
+        self.sdf_root.model().add_frame(frame_sdf)
 
     def get_material(self, node: OnshapeTreeNode) -> Material:
         """TODO: Get the actual material properties based on the colors and shit"""
