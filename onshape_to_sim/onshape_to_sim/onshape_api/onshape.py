@@ -234,6 +234,7 @@ class Onshape():
 
         # only parse as json string if we have to
         body = json.dumps(body) if type(body) == dict else body
+        print(body)
 
         res = requests.request(method, url, headers=req_headers, data=body, allow_redirects=False, stream=True)
 

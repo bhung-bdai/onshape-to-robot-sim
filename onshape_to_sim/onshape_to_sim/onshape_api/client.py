@@ -5,13 +5,12 @@ client
 Convenience functions for working with the Onshape API
 """
 
-import mimetypes
+import json
+import os
 import random
 import requests
 import string
-import os
-import json
-import hashlib
+import time
 from pathlib import Path
 
 from onshape_to_sim.onshape_api.onshape import Onshape
@@ -19,7 +18,41 @@ from onshape_to_sim.onshape_api.utils import (
     API,
     add_d_wvm_ids,
     add_d_wvm_e_ids,
+    wrap_in_quotes,
 )
+
+
+def _create_obj_export_assem_body(
+    obj_name: str,
+    resolution: str,
+    ang_tol: float = 0.1,
+    dist_tol: float = 0.0001
+    ) -> dict:
+    """Creates the body for an assembly obj export request. 
+    
+    Args:
+        assembly_name: name of the file to store the zipped files as
+        resolution: the resolution of the resulting mesh
+        ang_tol: maximum tolerance allowed in angular distance calculations (in degrees)
+        dist_tol: maximum tolerance allowed in linear distance calculations (in meters)
+
+    Returns:
+        The body of the JSON request to grab the full OBJ assembly from Onshape
+    """
+    return {
+        "resolution" : f"{resolution}",
+        "storeInDocument" : "false", 
+        "notifyUser" : "false", 
+        "destinationName" : "test", 
+        "includeExportIds" : "false", 
+        "flattenAssemblies" : "false", 
+        "ignoreExportRulesForContents" : "true", 
+        "formatName" : "OBJ", 
+        "grouping" : "true", 
+        "maximumChordLength": 10, # I have no idea what this actually does
+        "angularTolerance": ang_tol,
+        "distanceTolerance": dist_tol
+    }
 
 
 def escape_url(s):
@@ -119,6 +152,67 @@ class Client():
         json_request = API.documents
         return self._api.request(API.get_request, json_request).json()
 
+    
+    def ping_async_export_call(self, tid: str, configuration: str = API.default, time_delay: float = 30.0) -> dict:
+        """Waits for the export call to complete and returns its translation ID.
+
+        Args:
+            api_url: The URL where the API is being called
+            time_delay: The amount of time we spend waiting
+
+        Returns:
+            The translation ID which can be used to download the .OBJ files
+
+        Raises:
+            AttributeError if API is not actively being translated or not done 
+        """
+        status_response = self.translation_status_request(tid=tid, configuration=configuration)
+        while (request_state := status_response[API.request_state]) != API.done:
+            if request_state != API.active:
+                raise AttributeError(f"Request state terminated with state {request_state}")
+            time.sleep(time_delay)
+            status_response = self.translation_status_request(tid=tid, configuration=configuration)
+        return status_response
+
+    
+    def download_document_external_data(
+        self,
+        did: str,
+        fid: str,
+        filename: str,
+        configuration: str = API.default
+        ) -> dict:
+        """Downloads the external data associated with the document.
+
+        Most commonly used to get .objs stored in the document
+
+        Args:
+            did: document id
+            fid: file ids associated with the external object
+            filename: name of the file we want to store this as
+            configuration: the configuration of the thing
+        """
+        json_request = join_api_url(
+            API.documents,
+            "d",
+            did,
+            API.external_data,
+            fid
+        )
+        response = self._api.request(
+            API.get_request,
+            json_request,
+            query={API.config: configuration}
+        )
+        zip_ext = ".zip" 
+        # print(response.headers.get('content-type'))
+        if not filename.endswith(zip_ext):
+            filename += zip_ext
+        with open(filename, "wb") as fi:
+            fi.write(response.content)
+        return response
+
+
     def part_export_stl(self, did: str, wvmid: str, eid: str, part_id: str, wvm: str = "w") -> requests.Response:
         """
         Exports STL export from a part studio
@@ -143,6 +237,46 @@ class Client():
             "Accept": "*/*"
         }
         return self._api.request(API.get_request, json_request, headers=req_headers)
+
+    def assembly_export_obj(
+        self,
+        did: str,
+        wvmid: str,
+        eid: str,
+        filename: str,
+        wvm: str = "w",
+        resolution: str = API.coarse,
+        configuration: str = API.default,
+        ) -> dict:
+        """Exports an entire assembly into a concatenated OBJ file.
+
+        TODO (@bhung): figure out a smarter way to only grab the parts and not the assemblies, then split them up
+
+        Args:
+            did: document id 
+            wvm: the type of document we want to draw from (workspace, version, or microversion)
+            wvmid: workspace/version/microversion id
+            eid: element id
+            filename: name of the file you want to save to .obj as
+            resolution: resolution level of the mesh. Choose from API.coarse, API.medium, API.fine
+
+        Returns:
+            The Onshape response data with the translation ID, which is queried for the download link / status
+        """
+        json_request = join_api_url(
+            add_d_wvm_e_ids(API.assemblies, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
+            API.translations
+        )
+        export_body = _create_obj_export_assem_body(
+            obj_name=filename, resolution=resolution, 
+        )
+        return self._api.request(
+            API.post_request,
+            json_request,
+            query={API.config: configuration},
+            body=export_body
+        ).json()
+
 
     def all_elements_in_document(
         self,
@@ -334,6 +468,26 @@ class Client():
         json_request = join_api_url(
             add_d_wvm_e_ids(API.assemblies, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
             API.mass_properties
+        )
+        return self._api.request(
+            API.get_request,
+            json_request,
+            query={API.config: configuration}
+            ).json()
+
+    def translation_status_request(
+        self,
+        tid: str,
+        configuration: str = API.default,
+        ) -> dict:
+        """Checks the status of a translation request
+        
+        Args:
+            tid: translation id of the item being translated
+        """
+        json_request = join_api_url(
+            API.translations,
+            tid
         )
         return self._api.request(
             API.get_request,

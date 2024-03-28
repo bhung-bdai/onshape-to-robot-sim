@@ -1,5 +1,6 @@
 from typing import Union
 import json
+import time
 
 import numpy as np
 
@@ -83,7 +84,36 @@ def test_all_part_metadata():
     assert _check_equality_based_on_type(json_data, metadata_retrieved)
 
 
+def test_assembly_obj_exporter():
+    resp = onshape_client.assembly_export_obj(
+        did = "6041e7103bb40af449a81618",
+        wvm = "w",
+        wvmid = "43424f4f4c4a96485262232a",
+        eid = "aad7f639435879b7135dce0f",
+        filename = "test",
+    )
+    print(resp)
+    url = resp["id"]
+    time.sleep(2.0)
+    resp = onshape_client.ping_async_export_call(url)
+    print(resp)
+    return resp
+
+
+def test_obj_download(fid: str):
+    resp = onshape_client.download_document_external_data(
+        did = "6041e7103bb40af449a81618",
+        fid = fid,
+        filename = "data/obj_test/test"
+    )
+    print(resp.headers)
+    print(resp.headers.get('content-type'))
+    # print(f"Resp {resp.content}")
+
+
 if __name__ == "__main__":
-    test_assembly_definition()
-    test_single_part_metadata()
-    test_all_part_metadata()
+    # test_assembly_definition()
+    # test_single_part_metadata()
+    # test_all_part_metadata()
+    resp = test_assembly_obj_exporter()
+    test_obj_download(fid=resp["resultExternalDataIds"][0])

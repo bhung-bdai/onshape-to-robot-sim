@@ -10,7 +10,7 @@ import logging
 from logging.config import dictConfig
 import os
 
-import open3d as o3d
+import openmesh as om
 
 __all__ = [
     'log'
@@ -20,25 +20,37 @@ __all__ = [
 @dataclass
 class API:
     accept: str = "accept"
+    active: str = "ACTIVE"
     assemblies: str = "assemblies"
+    coarse: str = "coarse"
     computed_properties: str = "includeComputedProperties"
     config: str = "configuration"
     default: str = "default"
     documents: str = "documents"
+    done: str = "DONE"
     elements: str = "elements"
+    external_data: str = "externaldata"
+    fine: str = "fine"
     mass_properties: str = "massproperties"
     mass_override: str = "useMassPropertyOverrides"
     mate_connectors: str = "includeMateConnectors"
     mate_features: str = "includeMateFeatures"
+    medium: str = "med"
     metadata: str = "metadata"
     metadata_part: str = "p"
     microversion: str = "m"
+    obj: str = "obj"
     part_id: str = "partid"
     parts: str = "parts"
+    partstudios: str = "partstudios"
+    request_state: str = "requestState"
     stl: str = "stl"
+    translations: str = "translations"
+    translation_id: str = "id"
     version: str = "v"
     workspace: str = "w"
     get_request: str = "get"
+    post_request: str = "post"
 
 
 @dataclass
@@ -112,7 +124,6 @@ class PartAttributes():
     partId: str = "partId"
     bodyType: str = "bodyType"
 
-
 def add_d_wvm_ids(api_request: str, did: str, wvm: str, wvmid: str) -> str:
     """Wraps an API call with the document and workspace/version/microversion ids
 
@@ -142,6 +153,11 @@ def add_d_wvm_e_ids(api_request: str, did: str, wvm: str, wvmid: str, eid: str) 
     return request + "/e/" + eid
 
 
+def wrap_in_quotes(string_to_wrap: str) -> str:
+    """Wraps a string in quotation marks to make it acceptable by JSON."""
+    return f"\"{string_to_wrap}\""
+
+
 def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "") -> None:
     """Given a list of stl files, saves them as .objs with the same name
 
@@ -151,10 +167,10 @@ def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "")
         save_dir: the directory we want to save the .obj files to
     """
     for stl in stl_files:
-        stl_mesh = o3d.io.read_triangle_mesh(os.path.join(stl_dir, stl))
+        stl_mesh = om.read_trimesh(os.path.join(stl_dir, stl))
         obj_filename = stl.split(".")[0]
         obj_path = os.path.join(save_dir, obj_filename + ".obj")
-        o3d.io.write_triangle_mesh(obj_path, stl_mesh)
+        om.write_mesh(obj_path, stl_mesh)
 
 
 def log(msg, level=0):

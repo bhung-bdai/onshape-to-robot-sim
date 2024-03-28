@@ -1,4 +1,8 @@
 **.pyc
+**.obj
+**.stl
+**.mtl
+**.zip
 .vscode
 robots
 !robots/skeleton/config.json

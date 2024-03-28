@@ -253,7 +253,6 @@ class RobotSDF():
                         # https://cad.onshape.com/help/Content/mate-slider.htm?Highlight=slider%20mate
                         joint_axis = JointAxis()
                         # print(gz_mate_type)
-                        # TODO: see if we always use the 0 axis
                         joint_axis.set_xyz(Vector3d(0, 0, 1))
                         joint_sdf.set_axis(0, joint_axis)
                         # TODO: include stiffness, damping, dynamics, etc
@@ -274,13 +273,16 @@ class RobotSDF():
         world_r_link = node.world_tform_element[:3, :3]
         rpy = rotationMatrixToEulerAngles(world_r_link)
         com_in_world_gz = make_pose_gz(node.com_wrt_world, rpy)
-        # TODO!!! Figure out why this should always be 0
-        # link_sdf.set_raw_pose(com_in_world_gz)
+
+        # This is going to be 0 with respect to the world frame. You kind of have 2 options:
+        # You can either set the pose wrt the center of mass. This requires a reorienting everything properly
+        # Or you can set it wrt to the world, which is what Onshape gives. This means your frames are kind of all over,
+        # but it's a bit easier to deal with
+
         # Create the inertial element
         inertia_in_world_gz = make_inertial_gz(node.mass, node.inertia_wrt_world, np.hstack((node.com_wrt_world, rpy)))
         link_sdf.set_inertial(inertia_in_world_gz)
         mesh_uri = mesh_filepath(self.robot_name, node.mesh_name, self.mesh_directory)
-        # print(mesh_uri)
         # TODO: Drake appears to fail with the collision object for some reason?
         # collision_sdf = make_collision_object(
         #     node.simplified_name + "_collision",
@@ -313,6 +315,7 @@ class RobotSDF():
         frame_sdf = Frame()
         frame_sdf.set_name(node.simplified_name + "_frame")
         frame_sdf.set_attached_to(link_sdf.name())
+        frame_sdf.set_raw_pose(com_in_world_gz)
         self.sdf_root.model().add_frame(frame_sdf)
 
     def get_material(self, node: OnshapeTreeNode) -> Material:
