@@ -9,6 +9,7 @@ from dataclasses import dataclass, asdict
 import logging
 from logging.config import dictConfig
 import os
+import subprocess
 
 import openmesh as om
 
@@ -31,6 +32,7 @@ class API:
     elements: str = "elements"
     external_data: str = "externaldata"
     fine: str = "fine"
+    gltf: str = "gltf"
     mass_properties: str = "massproperties"
     mass_override: str = "useMassPropertyOverrides"
     mate_connectors: str = "includeMateConnectors"
@@ -153,12 +155,62 @@ def add_d_wvm_e_ids(api_request: str, did: str, wvm: str, wvmid: str, eid: str) 
     return request + "/e/" + eid
 
 
-def wrap_in_quotes(string_to_wrap: str) -> str:
-    """Wraps a string in quotation marks to make it acceptable by JSON."""
-    return f"\"{string_to_wrap}\""
+# def delimiter_separator(data: str, delimiter: str, ind_start: int = 1) -> list:
+#     """Separates data by the delimiter and adds the delimiter back in front of it.
+    
+#     This also keeps track of duplications and ignores duplicated items. Items are denoted by the first line of each item
+#     (assumed to be the name).
+#     """
+#     separated_data = data.split(delimiter)[ind_start:]
+#     newline_char = "\n"
+#     new_data = {}
+#     for chunk in separated_data:
+#         if len(chunk) == 0:
+#             continue
+#         name = chunk[:chunk.index(newline_char)].strip()
+#         name = name.replace(" ", "").lower()
+#         if name in new_data:
+#             continue
+#         new_data[name] = delimiter + chunk
+#     return new_data
+        
+
+# def separate_objs(assembly_obj_file: str, assembly_mtl_file: str, save_dir: str = "") -> None:
+#     """Separates an assembly obj file into its constituent parts
+
+#     Meshes are denominated by a `g <name of the part>`. This should match the simplified name of the obj in the node.
+#     Each of these should also include a material denoted `usemtl <identifier>`.
+    
+#     Args:
+#         assembly_obj_file: obj file containing the entire assembly
+#         assembly_mtl_file: mtl file for the entire assembly
+#     """
+#     mesh_delimiter = "g"
+#     obj_mtl_delimiter = "usemtl"
+#     mtl_delimiter = "newmtl"
+#     assembly_obj_file = check_and_append_extension(assembly_obj_file, API.obj)
+#     with open(assembly_obj_file, "r") as obj_file:
+#         obj_dump = obj_file.read()
+#         obj_items = delimiter_separator(obj_dump, mesh_delimiter)
+#     for obj_filename, obj_data in obj_items.items():
+#         obj_save_file = os.path.join(save_dir, check_and_append_extension(obj_filename, API.obj))
+#         with open(obj_save_file, "w") as fi:
+#             fi.write(obj_data)
+#     print(len(obj_items))
+#     print(obj_items.keys())
+#     # with open(assembly_mtl_file, "r") as mtl_file:
+#     #     mtl_dump = mtl_file.read()
+#     #     mtl_items = obj_dump.split(mtl_delimiter)[1:]
 
 
-def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "") -> None:
+def check_and_append_extension(filename: str, extension: str) -> str:
+    """Checks if the file ends with an extension. If not,it appends the given"""
+    if len(filename.split(".")) > 1:
+        return filename
+    return f"{filename}.{extension}"
+
+
+def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "", path_to_onshape_api = "") -> None:
     """Given a list of stl files, saves them as .objs with the same name
 
     Args:
@@ -166,11 +218,16 @@ def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "")
         stl_dir: the directory where the stls are located
         save_dir: the directory we want to save the .obj files to
     """
+    # TODO: Figure out how to fix this later with an absolute path
+    stl_to_obj = os.path.join(path_to_onshape_api, "./stl2obj")
     for stl in stl_files:
-        stl_mesh = om.read_trimesh(os.path.join(stl_dir, stl))
         obj_filename = stl.split(".")[0]
-        obj_path = os.path.join(save_dir, obj_filename + ".obj")
-        om.write_mesh(obj_path, stl_mesh)
+        obj_path = os.path.join(save_dir, check_and_append_extension(obj_filename, API.obj))
+        stl_path = os.path.join(stl_dir, check_and_append_extension(stl, API.stl))
+        # subprocess.call(["ls"])
+        print(obj_path)
+        print(stl_path)
+        subprocess.call([stl_to_obj, "--input", str(stl_path), "--output", str(obj_path)])
 
 
 def log(msg, level=0):

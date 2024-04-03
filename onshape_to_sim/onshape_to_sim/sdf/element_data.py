@@ -12,7 +12,21 @@ class JointTypeMap():
     revolute: int = 6
     revolute2: int = 7
     screw: int = 9
+    planar: int = 10
+    cylinder: int = 11
 
+
+@dataclass
+class JointTypeStrings():
+    Invalid: str = "invalid"
+    Ball: str = "ball"
+    Continuous: str = "continuous"
+    Fixed: str = "fixed"
+    Gearbox: str = "gearbox"
+    Prismatic: str = "prismatic"
+    Revolute: str = "revolute"
+    Revolute2: str = "revolute2"
+    Screw: str = "screw"
 
 @dataclass
 class GeometryTypeMap():
@@ -32,6 +46,8 @@ _onshape_mate_type_to_gz_mate_type = {
     "FASTENED": JointTypeMap.fixed,
     "SLIDER": JointTypeMap.prismatic,
     "BALL": JointTypeMap.ball,
+    "PLANAR": JointTypeMap.planar,
+    "CYLINDRICAL": JointTypeMap.cylinder,
 }
 
 

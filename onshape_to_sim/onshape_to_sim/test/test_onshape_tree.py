@@ -6,8 +6,14 @@ import numpy as np
 from onshape_to_sim.onshape_api.client import Client
 from onshape_to_sim.onshape_api.onshape_tree import (
     build_tree,
+    create_onshape_tree,
+    download_all_parts_meshes,
     _add_instances_mass_properties,
     _build_mass_properties_map
+)
+from onshape_to_sim.onshape_api.utils import (
+    API,
+    convert_stls_to_objs,
 )
 
 onshape_client = Client(creds="test_config.json", logging=False)
@@ -99,6 +105,19 @@ def test_mass_properties_map():
     assert _check_equality_based_on_type(mass_properties_map, real_map)
 
 
+def test_stl_download():
+    did = "6041e7103bb40af449a81618"
+    wvmid = "f6f89c195eec60b2e5c8a73e"
+    eid = "aad7f639435879b7135dce0f"
+    wvm = "v"
+    stl_dir = "data/stl_test"
+    obj_dir = "data/obj_test"
+    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="2wheel_stl_test")
+    mesh_files = download_all_parts_meshes(tree, data_directory=stl_dir, file_type=API.stl)
+    convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
+
+
 if __name__ == "__main__":
-    test_mass_properties_map()
+    # test_mass_properties_map()
+    test_stl_download()
 

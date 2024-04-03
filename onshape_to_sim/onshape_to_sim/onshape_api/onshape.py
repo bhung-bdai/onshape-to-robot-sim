@@ -234,10 +234,9 @@ class Onshape():
 
         # only parse as json string if we have to
         body = json.dumps(body) if type(body) == dict else body
-        print(body)
+        # print(body)
 
         res = requests.request(method, url, headers=req_headers, data=body, allow_redirects=False, stream=True)
-
         if res.status_code == 307:
             location = urlparse(res.headers["Location"])
             querystring = parse_qs(location.query)
@@ -253,8 +252,8 @@ class Onshape():
                 new_query[key] = querystring[key][0]  # won"t work for repeated query params
 
             return self.request(method, location.path, query=new_query, headers=headers, base_url=new_base_url, add_api_version=False)
-        elif not 200:
-            print(url)
+        elif not res.status_code == 200:
+            # print(url)
             print(f"! ERROR ({res.status_code}) while using OnShape API")
             if res.text:
                 print(f"! {res.text}")

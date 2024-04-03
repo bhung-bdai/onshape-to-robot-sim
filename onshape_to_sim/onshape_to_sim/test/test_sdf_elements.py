@@ -58,10 +58,30 @@ def test_two_wheels_all_end_to_end() -> None:
     test_sdf = RobotSDF(tree, mesh_directory="/workspaces/bdai/test/sdf_viewr/2wheels")
     test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/2wheels/2wheels_all_added")
 
+def test_two_wheels_planar() -> None:
+    did = "6041e7103bb40af449a81618"
+    wvmid = "b6d602f59a1ea3dd30577849"
+    eid = "aad7f639435879b7135dce0f"
+    wvm = "v"
+    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="2wheel_planar")
+    test_sdf = RobotSDF(tree, mesh_directory="/workspaces/bdai/test/sdf_viewr/2wheels")
+    test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/2wheels/2wheels_planar")
+
+def test_two_wheels_cyl() -> None:
+    did = "6041e7103bb40af449a81618"
+    wvmid = "f6f89c195eec60b2e5c8a73e"
+    eid = "aad7f639435879b7135dce0f"
+    wvm = "v"
+    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="2wheel_cyl")
+    test_sdf = RobotSDF(tree, mesh_directory="/workspaces/bdai/test/sdf_viewr/2wheels")
+    test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/2wheels/2wheels_cyl")
+
 
 if __name__ == "__main__":
     # test_robot_sdf_no_mates()
     # test_robot_sdf_extra_parts()
-    test_two_wheels_all_end_to_end()
+    # test_two_wheels_all_end_to_end()
+    # test_two_wheels_planar()
+    test_two_wheels_cyl()
 
 

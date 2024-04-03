@@ -18,7 +18,6 @@ from onshape_to_sim.onshape_api.utils import (
     API,
     add_d_wvm_ids,
     add_d_wvm_e_ids,
-    wrap_in_quotes,
 )
 
 
@@ -43,16 +42,34 @@ def _create_obj_export_assem_body(
         "resolution" : f"{resolution}",
         "storeInDocument" : "false", 
         "notifyUser" : "false", 
-        "destinationName" : "test", 
+        "destinationName" : f"{obj_name}", 
         "includeExportIds" : "false", 
         "flattenAssemblies" : "false", 
         "ignoreExportRulesForContents" : "true", 
         "formatName" : "OBJ", 
-        "grouping" : "true", 
+        "grouping" : "true",
         "maximumChordLength": 10, # I have no idea what this actually does
         "angularTolerance": ang_tol,
-        "distanceTolerance": dist_tol
+        "distanceTolerance": dist_tol,
+        "onePartPerDoc": "true",
+        "joinAdjacentSurfaces": "false",
+        "splitAssembliesIntoMultipleDocuments": "true",
     }
+    # return {
+    # "resolution" : "fine",
+    # "storeInDocument" : "false", 
+    # "notifyUser" : "false", 
+    # "partIds" : "JHD", 
+    # "destinationName" : f"{obj_name}" ,
+    # "includeExportIds" : "false", 
+    # "flattenAssemblies" : "false", 
+    # "ignoreExportRulesForContents" : "true", 
+    # "formatName" : "OBJ", 
+    # "grouping" : "true", 
+    # "maximumChordLength": 10,
+    # "angularTolerance": 0.1090830782496456,
+    # "distanceTolerance": 0.00012
+    # }
 
 
 def escape_url(s):
@@ -152,7 +169,6 @@ class Client():
         json_request = API.documents
         return self._api.request(API.get_request, json_request).json()
 
-    
     def ping_async_export_call(self, tid: str, configuration: str = API.default, time_delay: float = 30.0) -> dict:
         """Waits for the export call to complete and returns its translation ID.
 
@@ -173,7 +189,6 @@ class Client():
             time.sleep(time_delay)
             status_response = self.translation_status_request(tid=tid, configuration=configuration)
         return status_response
-
     
     def download_document_external_data(
         self,
@@ -212,8 +227,15 @@ class Client():
             fi.write(response.content)
         return response
 
-
-    def part_export_stl(self, did: str, wvmid: str, eid: str, part_id: str, wvm: str = "w") -> requests.Response:
+    def part_export_stl(
+        self,
+        did: str,
+        wvmid: str,
+        eid: str,
+        part_id: str,
+        wvm: str = API.workspace,
+        configuration: str = API.default
+        ) -> requests.Response:
         """
         Exports STL export from a part studio
 
@@ -234,8 +256,63 @@ class Client():
             API.stl
         )
         req_headers = {
-            "Accept": "*/*"
+            "Accept": "application/octet-stream"
         }
+        # print(json_request)
+        # json_request += "?scale=1"
+        # json_request = escape_url(json_request)
+        # print(json_request)
+        # https://cad.onshape.com/api/v6/parts/d/6041e7103bb40af449a81618/v/f6f89c195eec60b2e5c8a73e/e/aad7f639435879b7135dce0f/partid/JYD/stl?mode=text&grouping=true&scale=1&units=mm
+        # body = {
+        #     "scale": 0.01,
+        #     "units": "m",
+        #     "angleTolerance": 0.1,
+        #     "chordTolerance": 10,
+        # }
+        query = {"mode": "binary", "units": "meter", "configuration": configuration, "angleTolerance": 0.1}
+        return self._api.request(API.get_request, json_request, headers=req_headers, query=query)
+
+    def part_export_gltf(
+        self,
+        did: str,
+        wvmid: str,
+        eid: str,
+        part_id: str,
+        wvm: str = API.workspace
+        ) -> requests.Response:
+        """
+        Exports STL export from a part studio
+
+        Args:
+            did: document id 
+            wvm: the type of document we want to draw from (workspace, version, or microversion)
+            wvmid: workspace/version/microversion id
+            eid: element id
+            part_id: the id of the part
+
+        Returns:
+            Onshape response data with the STL exported inside the request.content
+        """
+        json_request = join_api_url(
+            add_d_wvm_e_ids(API.parts, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
+            API.part_id,
+            part_id,
+            API.gltf
+        )
+        req_headers = {
+            "Accept": "model/gltf-binary;qs=0.08"
+        }
+        print(json_request)
+        # json_request += "?scale=1"
+        # json_request = escape_url(json_request)
+        # print(json_request)
+        # https://cad.onshape.com/api/v6/parts/d/6041e7103bb40af449a81618/v/f6f89c195eec60b2e5c8a73e/e/aad7f639435879b7135dce0f/partid/JYD/stl?mode=text&grouping=true&scale=1&units=mm
+        # body = {
+        #     "scale": 0.01,
+        #     "units": "m",
+        #     "angleTolerance": 0.1,
+        #     "chordTolerance": 10,
+        # }
         return self._api.request(API.get_request, json_request, headers=req_headers)
 
     def assembly_export_obj(
@@ -244,7 +321,7 @@ class Client():
         wvmid: str,
         eid: str,
         filename: str,
-        wvm: str = "w",
+        wvm: str = API.workspace,
         resolution: str = API.coarse,
         configuration: str = API.default,
         ) -> dict:
@@ -276,7 +353,6 @@ class Client():
             query={API.config: configuration},
             body=export_body
         ).json()
-
 
     def all_elements_in_document(
         self,

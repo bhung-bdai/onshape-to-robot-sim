@@ -5,6 +5,9 @@ import time
 import numpy as np
 
 from onshape_to_sim.onshape_api.client import Client
+from onshape_to_sim.onshape_api.utils import (
+    separate_objs,
+)
 from onshape_to_sim.onshape_api.onshape_tree import (
     build_tree,
     _add_instances_mass_properties,
@@ -67,6 +70,7 @@ def test_single_part_metadata():
         partid = "JHD",
         wvm = "v",
     )
+    print(metadata_retrieved)
     with open("../test/data/one_part_metadata.txt", "r") as fi:
         json_data = json.load(fi)
     assert _check_equality_based_on_type(json_data, metadata_retrieved)
@@ -111,9 +115,29 @@ def test_obj_download(fid: str):
     # print(f"Resp {resp.content}")
 
 
+def test_obj_splitter():
+    obj_file = "data/obj_test/test.obj"
+    mtl_file = "data/obj_test/test.mtl"
+    save_dir = "data/obj_test/parsed"
+    separate_objs(obj_file, mtl_file, save_dir)
+
+
+def test_get_all_parts():
+    resp = onshape_client.all_parts_in_element(
+        did="6041e7103bb40af449a81618",
+        wvmid="43424f4f4c4a96485262232a",
+        eid="7a12328807be40cb1472cc52",
+        wvm="w"
+    )
+    print(resp)
+
+
+
 if __name__ == "__main__":
     # test_assembly_definition()
     # test_single_part_metadata()
     # test_all_part_metadata()
-    resp = test_assembly_obj_exporter()
-    test_obj_download(fid=resp["resultExternalDataIds"][0])
+    # resp = test_assembly_obj_exporter()
+    # test_obj_download(fid=resp["resultExternalDataIds"][0])
+    # test_obj_splitter()
+    test_get_all_parts()
