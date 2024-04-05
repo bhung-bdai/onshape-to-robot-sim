@@ -30,6 +30,7 @@ class API:
     documents: str = "documents"
     done: str = "DONE"
     elements: str = "elements"
+    exclude_suppressed: str = "excludeSuppressed"
     external_data: str = "externaldata"
     fine: str = "fine"
     gltf: str = "gltf"

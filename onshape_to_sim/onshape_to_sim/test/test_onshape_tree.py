@@ -106,13 +106,14 @@ def test_mass_properties_map():
 
 
 def test_stl_download():
-    did = "6041e7103bb40af449a81618"
-    wvmid = "f6f89c195eec60b2e5c8a73e"
-    eid = "aad7f639435879b7135dce0f"
+    # d2b65b007cccdccd672c9efe/v/89942609c596c269771f7d84/e/d64d0511810bd7d9d742d1bb
+    did = "d2b65b007cccdccd672c9efe"
+    wvmid = "89942609c596c269771f7d84"
+    eid = "d64d0511810bd7d9d742d1bb"
     wvm = "v"
-    stl_dir = "data/stl_test"
-    obj_dir = "data/obj_test"
-    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="2wheel_stl_test")
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
+    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="simple_arm")
     mesh_files = download_all_parts_meshes(tree, data_directory=stl_dir, file_type=API.stl)
     convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
 

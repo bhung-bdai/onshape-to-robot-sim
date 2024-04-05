@@ -38,7 +38,7 @@ def get_element_tform_mate(mated_cs: dict) -> npt.ArrayLike:
     element_tform_mate[:3, 1] = np.array(mated_cs[FeatureAttributes.yAxis])
     element_tform_mate[:3, 2] = np.array(mated_cs[FeatureAttributes.zAxis])
     element_tform_mate[:3, 3] = mated_cs[FeatureAttributes.origin]
-    return element_tform_mate
+    return np.round(element_tform_mate, decimals=10)
 
 
 class OnshapeTreeNode():
@@ -127,13 +127,6 @@ class OnshapeTreeNode():
         print(f"{self.world_tform_element}")
         for child in self.children:
             child.print_transforms()
-
-    # def print_joint_info(self):
-    #     """Print nodes followed by their joint information"""
-    #     print(f"{self}", end=": ")
-    #     print(f"{self.joint_info}")
-    #     for child in self.children:
-    #         child.print_joint_info()
 
     def print_names(self):
         """Print nodes"""
@@ -318,20 +311,30 @@ def _build_features_map(features: list) -> dict:
         mate_name = feature[FeatureAttributes.featureData][CommonAttributes.name]
         # TODO @bhung figure out if the assumption that the parent is the final entity is true
         # Loop through the n - 1 children and added them
-        parent_entity = mated_entities[-1]
-        parent_path = "".join(parent_entity[FeatureAttributes.matedOccurrence])
+        entity_one_path = "".join(mated_entities[0][FeatureAttributes.matedOccurrence])
+        entity_two_path = "".join(mated_entities[1][FeatureAttributes.matedOccurrence])
+        if entity_one_path == "":
+            parent_entity = mated_entities[0]
+            parent_path = entity_one_path
+        else:
+            parent_entity = mated_entities[1]
+            parent_path = entity_two_path
+        print(parent_path)
+        # parent_path = "".join(parent_entity[FeatureAttributes.matedOccurrence])
         parent_info = {
             FeatureAttributes.children: [],
             FeatureAttributes.is_parent: True,
             FeatureAttributes.mateType: mate_type,
             CommonAttributes.name: mate_name, 
         }
+        # Based on docs, onshape forces mates to have 2 things
         for i in range(len(mated_entities) - 1):
             # Initialize the child information
             child_info = {
                 FeatureAttributes.parent: parent_path,
                 FeatureAttributes.is_parent: False,
-                FeatureAttributes.mateType: mate_type
+                FeatureAttributes.mateType: mate_type,
+                CommonAttributes.name: mate_name,
             }
             entity = mated_entities[i]
             child_path = "".join(entity[FeatureAttributes.matedOccurrence])
@@ -534,9 +537,16 @@ def main():
     # wvmid = "7e51d7b6b381bd79481e2033"
     # eid = "aad7f639435879b7135dce0f"
     # wvm = "v"
-    did = "6041e7103bb40af449a81618"
-    wvmid = "f6f89c195eec60b2e5c8a73e"
-    eid = "aad7f639435879b7135dce0f"
+    # did = "9e58c2c2298902a0b2526461"
+    # wvmid = "10c0fc2dbd8f4f1d0e448548"
+    # eid = "5048884906d62c21e634d119"
+    # d2b65b007cccdccd672c9efe/v/d5207597cf0d4de2d51a2350/e/d64d0511810bd7d9d742d1bb
+    did = "d2b65b007cccdccd672c9efe"
+    wvmid = "13393916865ef21e14c7564a"
+    eid = "d64d0511810bd7d9d742d1bb"
+    # did = "6041e7103bb40af449a81618"
+    # wvmid = "f6f89c195eec60b2e5c8a73e"
+    # eid = "aad7f639435879b7135dce0f"
     wvm = "v"
     test = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid)
     # document_name = onshape_client.get_document(did=did)[CommonAttributes.name]
@@ -548,6 +558,7 @@ def main():
     #     )
     # # # print(json_data)
     # test = build_tree(json_data, robot_name=document_name)
+    test.print_transforms()
     test.print_children()
     print(test.joint_parents)
     # No long implemented: test.print_joint_info()

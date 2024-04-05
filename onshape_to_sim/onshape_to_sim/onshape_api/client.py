@@ -20,7 +20,7 @@ from onshape_to_sim.onshape_api.utils import (
     add_d_wvm_e_ids,
 )
 
-
+# TODO: remove dead code
 def _create_obj_export_assem_body(
     obj_name: str,
     resolution: str,
@@ -55,22 +55,6 @@ def _create_obj_export_assem_body(
         "joinAdjacentSurfaces": "false",
         "splitAssembliesIntoMultipleDocuments": "true",
     }
-    # return {
-    # "resolution" : "fine",
-    # "storeInDocument" : "false", 
-    # "notifyUser" : "false", 
-    # "partIds" : "JHD", 
-    # "destinationName" : f"{obj_name}" ,
-    # "includeExportIds" : "false", 
-    # "flattenAssemblies" : "false", 
-    # "ignoreExportRulesForContents" : "true", 
-    # "formatName" : "OBJ", 
-    # "grouping" : "true", 
-    # "maximumChordLength": 10,
-    # "angularTolerance": 0.1090830782496456,
-    # "distanceTolerance": 0.00012
-    # }
-
 
 def escape_url(s):
     return s.replace('/', '%2f').replace('+', '%2b')
@@ -258,20 +242,9 @@ class Client():
         req_headers = {
             "Accept": "application/octet-stream"
         }
-        # print(json_request)
-        # json_request += "?scale=1"
-        # json_request = escape_url(json_request)
-        # print(json_request)
-        # https://cad.onshape.com/api/v6/parts/d/6041e7103bb40af449a81618/v/f6f89c195eec60b2e5c8a73e/e/aad7f639435879b7135dce0f/partid/JYD/stl?mode=text&grouping=true&scale=1&units=mm
-        # body = {
-        #     "scale": 0.01,
-        #     "units": "m",
-        #     "angleTolerance": 0.1,
-        #     "chordTolerance": 10,
-        # }
         query = {"mode": "binary", "units": "meter", "configuration": configuration, "angleTolerance": 0.1}
         return self._api.request(API.get_request, json_request, headers=req_headers, query=query)
-
+    # TODO: remove dead code
     def part_export_gltf(
         self,
         did: str,
@@ -302,17 +275,6 @@ class Client():
         req_headers = {
             "Accept": "model/gltf-binary;qs=0.08"
         }
-        print(json_request)
-        # json_request += "?scale=1"
-        # json_request = escape_url(json_request)
-        # print(json_request)
-        # https://cad.onshape.com/api/v6/parts/d/6041e7103bb40af449a81618/v/f6f89c195eec60b2e5c8a73e/e/aad7f639435879b7135dce0f/partid/JYD/stl?mode=text&grouping=true&scale=1&units=mm
-        # body = {
-        #     "scale": 0.01,
-        #     "units": "m",
-        #     "angleTolerance": 0.1,
-        #     "chordTolerance": 10,
-        # }
         return self._api.request(API.get_request, json_request, headers=req_headers)
 
     def assembly_export_obj(
@@ -519,10 +481,16 @@ class Client():
             eid: element id
             """
         json_request = add_d_wvm_e_ids(API.assemblies, did=did, wvm=wvm, wvmid=wvmid, eid=eid)
+        query = {
+            API.config: configuration,
+            API.mate_connectors: True,
+            API.mate_features: True,
+            API.exclude_suppressed: True
+        }
         return self._api.request(
             API.get_request,
             json_request,
-            query={API.config: configuration, API.mate_connectors: True, API.mate_features: True}
+            query=query
             ).json()
 
     def assembly_mass_properties(

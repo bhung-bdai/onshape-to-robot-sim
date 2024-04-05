@@ -116,14 +116,25 @@ def eulerAnglesToRotationMatrix(pose: np.array):
     # ])
     # return R_z @ R_y @ R_x
 
+def to_homogeneous(vec3d: np.ndarray) -> np.ndarray:
+    return np.array([vec3d[0], vec3d[1], vec3d[2], 1])
+
+def from_homogeneous(vec4d: np.ndarray) -> np.ndarray:
+    return vec4d[:3]
 
 def pose_to_transform(pose: Pose3d) -> np.ndarray:
-    H = np.zeros((4, 4))
+    H = np.eye(4)
     rot_vec = np.array([pose.roll(), pose.pitch(), pose.yaw()])
     R = eulerAnglesToRotationMatrix(rot_vec)
     H[:3, :3] = R
     H[:3, 3] = [pose.x(), pose.y(), pose.z()]
     return H
+
+
+def rotate_transform(R: np.ndarray, H: np.ndarray) -> np.ndarray:
+    rotation_transform = np.eye(4)
+    rotation_transform[:3, :3] = R
+    return rotation_transform @ H 
 
 
 def transform_to_pose(transform: np.ndarray) -> Pose3d:
@@ -252,10 +263,12 @@ def make_visual_object(
     return visual
 
 
-def make_joint_axis_object(x: float, y: float, z:float) -> JointAxis:
+def make_joint_axis_object(x: float, y: float, z:float, relative_to: Optional[str] = None) -> JointAxis:
     """Creates a joint axis object from an axis"""
     joint_axis = JointAxis()
     joint_axis.set_xyz(Vector3d(x, y, z))
+    if relative_to is not None:
+        joint_axis.set_xyz_expressed_in(relative_to)
     return joint_axis
 
 
@@ -265,6 +278,7 @@ def mesh_filepath(robot_name: str, mesh_name: str, mesh_directory: str) -> str:
 
 def make_dummy_name(parent_name: str, child_name: str, joint_type: str, axis: str) -> str:
     return f"{parent_name}_to_{child_name}_{joint_type}_{axis}_link"
+
 
 def _translate_rotation_axis(translation_pose: Pose3d, rotation_pose: Pose3d) -> Pose3d:
     return Pose3d(
@@ -291,6 +305,8 @@ class RobotSDF():
         self.sdf_root.set_model(model)
         self._build_sdf(onshape_root)
 
+    def add_frame_to_root(self, frame: Frame) -> None:
+        self.sdf_root.model().add_frame(frame) 
     
     def _add_fixed_joint(self, parent_name: str, child_name: str, joint_pose: Pose3d) -> None:
         """Adds a fixed joint between two different links"""
@@ -309,19 +325,41 @@ class RobotSDF():
         """Takes in a node which has a joint with children.""" 
         # TODO: figure out how to set the name of the joints
         # Loops through all the joints in the parent and creates a joint
+        print(parent_link)
         for joint in joint_info:
             for child in joint[FeatureAttributes.children]:
-                joint_sdf = Joint()
                 child_node = occurrence_id_to_node[child]
                 gz_mate_type = onshape_mate_to_gz_mate(joint[FeatureAttributes.mateType])
+                joint_t_world = joint[FeatureAttributes.transform]
+                joint_pose_gz = make_pose_gz(
+                    joint_t_world[:3, 3],
+                    rotationMatrixToEulerAngles(joint_t_world[:3, :3])
+                )
+                # Fix the base link to the origin
+
+                # # Create a joint frame at the current joint location. This should be wrong in the next iteration but we want to test it
+                # joint_frame_sdf = Frame()
+                # joint_frame_name = f"{joint[CommonAttributes.name]}_frame"
+                # joint_frame_sdf.set_name(joint_frame_name)
+                # joint_frame_sdf.set_raw_pose(transform_to_pose(joint_t_world))
+                # # print(f"{joint_frame_name}: {joint_t_world}")
+                # self.add_frame_to_root(joint_frame_sdf)
+
+                # Create the joint attached to the thing
+                joint_sdf = Joint()
                 joint_sdf.set_type(JointType(gz_mate_type))
                 # Set the joint to be linked to the parent and the child links
                 joint_sdf.set_parent_name(parent_link)
                 joint_sdf.set_child_name(child_node.simplified_name)
                 # Add the pose of the joint
                 # The transform is given wrt to the parent link so we extract/set pose
-                joint_transform = joint[FeatureAttributes.transform]
+                # joint_t_world = joint[FeatureAttributes.transform]
                 # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
+                # parent_t_world = pose_to_transform(parent_pose)
+                # # joint_t_world_match_parent = rotate_transform(R=parent_t_world[:3, :3], H=joint_t_world)
+                # # print(parent_t_world)
+                # joint_t_world_match_parent = joint_t_world # parent_t_world @   @ np.linalg.inv(joint_t_world)
+
                 # parent_rotation = eulerAnglesToRotationMatrix(parent_pose)
                 # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
                 # parent_transform = np.zeros((4, 4))
@@ -329,10 +367,7 @@ class RobotSDF():
                 # parent_transform[:3, 3] = parent_translation
                 # # print(parent_transform)
                 # joint_transform = joint_transform @ parent_transform
-                joint_pose_gz = make_pose_gz(
-                    joint_transform[:3, 3],
-                    rotationMatrixToEulerAngles(joint_transform[:3, :3])
-                )
+                # print(f"Joint {parent_link} : {joint_pose_gz}")
                 joint_sdf.set_raw_pose(joint_pose_gz)
                 joint_sdf.set_name(joint[CommonAttributes.name])
                 # TODO implement the rest of the joints types later
@@ -341,7 +376,7 @@ class RobotSDF():
                         # Revolute joints currently only support turning about the Z-axis: see 
                         # https://cad.onshape.com/help/Content/mate-revolute.htm?cshid=mate_revolute
                         # https://cad.onshape.com/help/Content/mate-slider.htm?Highlight=slider%20mate
-                        joint_sdf.set_axis(0, make_joint_axis_object(0, 0, 1))
+                        joint_sdf.set_axis(0, make_joint_axis_object(0, 0, 1)) #relative_to=joint_frame_name))
                         # TODO: include stiffness, damping, dynamics, etc
                         # TODO: include gearing and gearbox ratios
                         # TODO: include the position velocity and effort limits
@@ -352,18 +387,18 @@ class RobotSDF():
                     case JointTypeMap.planar:
                         # Add a Revolute on the Z-axis and two prismatic on the X
                         # We add both of the prismatics here
-                        parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
-                        child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
-                        # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
-                        child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
+                        # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
+                        # child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
+                        # # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
+                        # child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
                         # print(pose_to_transform(child_pose))
                         # print(pose_to_transform(parent_pose))
-                        joint_pose_gz = make_pose_gz(
-                            child_translation,
-                            rotationMatrixToEulerAngles(
-                                joint_transform[:3, :3]
-                            )
-                        )
+                        # joint_pose_gz = make_pose_gz(
+                        #     child_translation,
+                        #     rotationMatrixToEulerAngles(
+                        #         joint_transform[:3, :3]
+                        #     )
+                        # )
                         # eulerAnglesToRotationMatrix(parent_pose) @  
                         # print(parent_translation)
                         # print(eulerAnglesToRotationMatrix(parent_pose))
@@ -413,19 +448,19 @@ class RobotSDF():
                         # transform given by onshape is wonky and weird. Basically the joint needs to apply the rotation
                         # on the parent for it to work, but the offset given by the parent is large enough to mess
                         # up the translation part.
-                        parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
-                        child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
-                        # parent_rotation = eulerAnglesToRotationMatrix(parent_pose)
-                        parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
-                        child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
-                        joint_pose_gz = make_pose_gz(
-                            parent_translation,
-                            rotationMatrixToEulerAngles(joint_transform[:3, :3])
-                        )
-                        print("test")
-                        print(eulerAnglesToRotationMatrix(rotationMatrixToEulerAngles(joint_transform[:3, :3])))
-                        print(transform_to_pose(pose_to_transform(joint_pose_gz)))
-                        print(f"cyl {parent_link}: {pose_to_transform(joint_pose_gz)}")
+                        # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
+                        # child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
+                        # # parent_rotation = eulerAnglesToRotationMatrix(parent_pose)
+                        # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
+                        # child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
+                        # joint_pose_gz = make_pose_gz(
+                        #     parent_translation,
+                        #     rotationMatrixToEulerAngles(joint_transform[:3, :3])
+                        # )
+                        # print("test")
+                        # print(eulerAnglesToRotationMatrix(rotationMatrixToEulerAngles(joint_transform[:3, :3])))
+                        # print(transform_to_pose(pose_to_transform(joint_pose_gz)))
+                        # print(f"cyl {parent_link}: {pose_to_transform(joint_pose_gz)}")
 
                         # Create and fix the dummy link to the parent link
                         dummy_link = make_dummy_name(
@@ -489,9 +524,9 @@ class RobotSDF():
         link_sdf.set_name(node.simplified_name)
         # Create the pose wrt the world frame and set it to the link
         world_r_link = node.world_tform_element[:3, :3]
-        print(f"{node.simplified_name}: {world_r_link}")
         rpy = rotationMatrixToEulerAngles(world_r_link)
         com_in_world_gz = make_pose_gz(node.com_wrt_world, rpy)
+        print(f"Link {node.simplified_name}: {com_in_world_gz}")
 
         # This is going to be 0 with respect to the world frame. You kind of have 2 options:
         # You can either set the pose wrt the center of mass. This requires a reorienting everything properly
@@ -544,6 +579,8 @@ class RobotSDF():
         for part in onshape_root.get_parts():
             self.add_link(part)
         for joint_parent, joint_info in onshape_root.get_joint_parents().items():
+            if joint_parent == onshape_root.simplified_name:
+                joint_parent = "world"
             self.add_joints(joint_info, onshape_root.get_occurrence_id_to_node(), joint_parent)
         
     def write_sdf(self, sdf_filepath: Optional[str] = None):
