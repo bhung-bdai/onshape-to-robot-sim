@@ -89,10 +89,11 @@ def test_direct_drive_diff() -> None:
 
 def test_easy_arm() -> None:
     did = "d2b65b007cccdccd672c9efe"
-    wvmid = "0e15a6b47f8d747e7a307be2"
+    wvmid = "884cf1d5ad78537d669807d1"
     eid = "d64d0511810bd7d9d742d1bb"
     wvm = "v"
     tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="simple_arm")
+    # print(tree.joint_parents)
     test_sdf = RobotSDF(tree, mesh_directory="/workspaces/bdai/test/sdf_viewr/simple_arm")
     test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm")
 
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     # test_two_wheels_all_end_to_end()
     # test_two_wheels_planar()
     # test_two_wheels_cyl()
-    test_direct_drive_diff()
-    # test_easy_arm()
+    # test_direct_drive_diff()
+    test_easy_arm()
 
 

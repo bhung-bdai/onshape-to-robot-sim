@@ -7,7 +7,7 @@ from onshape_to_sim.onshape_api.client import Client
 from onshape_to_sim.onshape_api.onshape_tree import (
     build_tree,
     create_onshape_tree,
-    download_all_parts_meshes,
+    # download_all_parts_meshes,
     _add_instances_mass_properties,
     _build_mass_properties_map
 )
@@ -118,7 +118,24 @@ def test_stl_download():
     convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
 
 
+def stl_converter(stl_dir: str, obj_dir: str, mesh_files: str, stl_to_obj_location: str) -> None:
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
+    # tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="simple_arm")
+    # mesh_files = download_all_parts_meshes(tree, data_directory=stl_dir, file_type=API.stl)
+    convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
+
+
 if __name__ == "__main__":
     # test_mass_properties_map()
-    test_stl_download()
+    stl_obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
+    mesh_files = ["base.stl", "part_assem.stl", "x_shaft.stl", "y_shaft.stl", "z_shaft.stl"]
+    stl_converter(
+        stl_obj_dir,
+        stl_obj_dir,
+        mesh_files,
+        "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+    )
+
+    # test_stl_download()
 

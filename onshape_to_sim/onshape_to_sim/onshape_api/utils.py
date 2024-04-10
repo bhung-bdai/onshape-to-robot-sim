@@ -23,6 +23,7 @@ class API:
     accept: str = "accept"
     active: str = "ACTIVE"
     assemblies: str = "assemblies"
+    assembly_computed_properties: str = "includeComputedAssemblyProperties"
     coarse: str = "coarse"
     computed_properties: str = "includeComputedProperties"
     config: str = "configuration"
@@ -32,6 +33,7 @@ class API:
     elements: str = "elements"
     exclude_suppressed: str = "excludeSuppressed"
     external_data: str = "externaldata"
+    external_data_ids: str = "resultExternalDataIds"
     fine: str = "fine"
     gltf: str = "gltf"
     mass_properties: str = "massproperties"
@@ -78,8 +80,10 @@ class CommonAttributes:
     elementId: str = "elementId"
     elementType: str = "type"
     documentMicroversion: str = "documentMicroversion"
+    properties: str = "properties"
     root: str = "root"
     transform: str = "transform"
+    value: str = "value"
     version: str = "documentVersion"
     workspace: str = "documentWorkspace"
 
@@ -116,6 +120,7 @@ class MassAttributes():
     mass: str = "mass"
     volume: str = "volume"
 
+
 @dataclass
 class OccurrenceAttributes():
     path: str = "path"
@@ -126,6 +131,7 @@ class OccurrenceAttributes():
 class PartAttributes():
     partId: str = "partId"
     bodyType: str = "bodyType"
+
 
 def add_d_wvm_ids(api_request: str, did: str, wvm: str, wvmid: str) -> str:
     """Wraps an API call with the document and workspace/version/microversion ids
@@ -139,6 +145,7 @@ def add_d_wvm_ids(api_request: str, did: str, wvm: str, wvmid: str) -> str:
         The properly formatted api request and calls.
     """
     return api_request + "/d/" + did + "/" + wvm + "/" + wvmid
+
 
 def add_d_wvm_e_ids(api_request: str, did: str, wvm: str, wvmid: str, eid: str) -> str:
     """Wraps an API call with the document, workspace/version/microversion, and element ids
@@ -156,25 +163,14 @@ def add_d_wvm_e_ids(api_request: str, did: str, wvm: str, wvmid: str, eid: str) 
     return request + "/e/" + eid
 
 
-# def delimiter_separator(data: str, delimiter: str, ind_start: int = 1) -> list:
-#     """Separates data by the delimiter and adds the delimiter back in front of it.
-    
-#     This also keeps track of duplications and ignores duplicated items. Items are denoted by the first line of each item
-#     (assumed to be the name).
-#     """
-#     separated_data = data.split(delimiter)[ind_start:]
-#     newline_char = "\n"
-#     new_data = {}
-#     for chunk in separated_data:
-#         if len(chunk) == 0:
-#             continue
-#         name = chunk[:chunk.index(newline_char)].strip()
-#         name = name.replace(" ", "").lower()
-#         if name in new_data:
-#             continue
-#         new_data[name] = delimiter + chunk
-#     return new_data
-        
+def get_relevant_metadata(metadata_list: list, relevant_metadata: set) -> dict:
+    """Returns each entry in the relevant metadata set mapped to its value."""
+    metadata_value_map = {}
+    for metadata in metadata_list:
+        if (name := metadata[CommonAttributes.name]) in relevant_metadata:
+            metadata_value_map[name] = metadata[CommonAttributes.value]
+    return metadata_value_map
+
 
 # def separate_objs(assembly_obj_file: str, assembly_mtl_file: str, save_dir: str = "") -> None:
 #     """Separates an assembly obj file into its constituent parts
@@ -229,6 +225,16 @@ def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "",
         print(obj_path)
         print(stl_path)
         subprocess.call([stl_to_obj, "--input", str(stl_path), "--output", str(obj_path)])
+
+
+def join_api_url(*args: str) -> str:
+    """Joins all of the strings provided in the arguments with (/) slashes"""
+    api_url = args[0]
+    for i, arg in enumerate(args):
+        if i == 0:
+            continue
+        api_url = api_url + "/" + arg
+    return api_url
 
 
 def log(msg, level=0):

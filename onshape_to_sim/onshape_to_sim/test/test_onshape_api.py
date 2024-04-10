@@ -5,9 +5,6 @@ import time
 import numpy as np
 
 from onshape_to_sim.onshape_api.client import Client
-from onshape_to_sim.onshape_api.utils import (
-    separate_objs,
-)
 from onshape_to_sim.onshape_api.onshape_tree import (
     build_tree,
     _add_instances_mass_properties,
@@ -104,7 +101,7 @@ def test_assembly_obj_exporter():
     return resp
 
 
-def test_obj_download(fid: str):
+def test_ext_download(fid: str):
     resp = onshape_client.download_document_external_data(
         did = "6041e7103bb40af449a81618",
         fid = fid,
@@ -123,13 +120,24 @@ def test_obj_splitter():
 
 
 def test_get_all_parts():
+    # d2b65b007cccdccd672c9efe/w/f8992e8833ba413758399e1a/e/00bca8eda0800a24592e333f
     resp = onshape_client.all_parts_in_element(
-        did="6041e7103bb40af449a81618",
-        wvmid="43424f4f4c4a96485262232a",
-        eid="7a12328807be40cb1472cc52",
-        wvm="w"
+        did="d2b65b007cccdccd672c9efe",
+        wvmid="c433b653b5fe2178d20129b4",
+        eid="00bca8eda0800a24592e333f",
+        wvm="v"
     )
-    print(resp)
+
+
+def test_assembly_stl_download():
+    resp = onshape_client.assembly_stl_pipeline(
+        did="d2b65b007cccdccd672c9efe",
+        wvmid="c433b653b5fe2178d20129b4",
+        eid="00bca8eda0800a24592e333f",
+        wvm="v",
+        meshname="test",
+        filename="part_assem",
+    )
 
 
 
@@ -140,4 +148,5 @@ if __name__ == "__main__":
     # resp = test_assembly_obj_exporter()
     # test_obj_download(fid=resp["resultExternalDataIds"][0])
     # test_obj_splitter()
-    test_get_all_parts()
+    # test_get_all_parts()
+    test_assembly_stl_download()
