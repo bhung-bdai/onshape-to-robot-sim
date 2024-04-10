@@ -1,0 +1,19 @@
+# Copyright (c) 2024 Boston Dynamics AI Institute LLC. All rights reserved.
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onshape-to-sim"
+version = "0.1.0"
+requires-python = ">=3.8"
+readme = "README.md"
+
+dependencies = [
+    "numpy>=1.26.3",
+    "open3d>=0.17.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["onshape_to_sim"]

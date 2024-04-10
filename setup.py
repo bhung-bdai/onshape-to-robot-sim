@@ -6,12 +6,14 @@ with open("README-pypi.md", "r", encoding="utf-8") as stream:
 setuptools.setup(
     name="onshape-to-robot",
     version="0.3.24",
-    author="Rhoban team",
-    author_email="team@rhoban.com",
+    author=[
+        {name = "Rhoban team", email="team@rhoban.com"},
+        {name = "Brandon Hung", email="bhung@theaiinstitute.com"}
+    ]
     description="Converting OnShape assembly to robot definition (SDF or URDF) through OnShape API ",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/rhoban/onshape-to-robot/",
+    url="https://github.com/bhung-bdai/onshape-to-robot-sim",
     packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": [
