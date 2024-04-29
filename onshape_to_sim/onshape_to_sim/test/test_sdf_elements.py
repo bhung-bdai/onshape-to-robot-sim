@@ -3,6 +3,7 @@
 """Tests the formation of the SDF elements"""
 import json
 import os
+import pickle
 
 import numpy as np
 
@@ -98,6 +99,18 @@ def test_easy_arm() -> None:
     test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm")
 
 
+def test_throwy() -> None:
+    # https://theaiinstitute.onshape.com/documents/dc7bc8baf40949ec82a161ab/v/7102923eec72ea4dbcc6a272/e/e246deec97cc75cedfed8035
+    did = "dc7bc8baf40949ec82a161ab"
+    wvmid = "f9002498491b3149a1d74724"
+    eid = "e246deec97cc75cedfed8035"
+    wvm = "v"
+    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="throwy")
+    # print(tree.joint_parents)
+    test_sdf = RobotSDF(tree, mesh_directory="/workspaces/bdai/test/sdf_viewr/throwy")
+    test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/throwy/throwy")
+
+
 if __name__ == "__main__":
     # test_robot_sdf_no_mates()
     # test_robot_sdf_extra_parts()
@@ -105,6 +118,7 @@ if __name__ == "__main__":
     # test_two_wheels_planar()
     # test_two_wheels_cyl()
     # test_direct_drive_diff()
-    test_easy_arm()
+    # test_easy_arm()
+    test_throwy()
 
 

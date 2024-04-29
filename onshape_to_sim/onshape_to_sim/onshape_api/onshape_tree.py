@@ -25,6 +25,7 @@ from onshape_to_sim.onshape_api.utils import (
     PartAttributes,
     check_and_append_extension,
     get_relevant_metadata,
+    join_api_url,
 )
 from onshape_to_sim.utils import (
     express_mass_properties_in_world_frame
@@ -36,7 +37,6 @@ onshape_client = Client(creds="test_config.json", logging=False)
 
 part_relevant_metadata = set(("Rigid Body",))
 assembly_relevant_metadata = set(("Rigid Body",))
-
 
 def get_element_tform_mate(mated_cs: dict) -> npt.ArrayLike:
     element_tform_mate = np.eye(4)
@@ -151,6 +151,12 @@ class OnshapeTreeNode():
         for child in self.children:
             child.print_mass_properties()
 
+    def search_by_occurrence_id(self, occurrence_id: str) -> Optional[OnshapeTreeNode]:
+        if self.occurrence_id == occurrence_id:
+            return self
+        for child in self.children:
+            child.search_by_occurrence_id(occurrence_id)
+
     def _initialize_node(
         self,
         occurrence_map: dict,
@@ -187,8 +193,7 @@ class OnshapeTreeNode():
         if self.occurrence_id is None or self.occurrence_id not in joint_map:
             return
         for joint in joint_map[self.occurrence_id]:
-            if not joint[FeatureAttributes.is_parent]:
-                continue
+            # breakpoint()
             # Thanks again to Onshape for being incompatible with this implementation
             # Basically you need to go up to the nearest rigid body because mate connectors can only occur on faces of 
             # parts. So if the parent assembly is the link, then we need to find it to define the joint instead
@@ -230,8 +235,9 @@ class OnshapeTreeNode():
             com_in_element_frame = mass_properties[MassAttributes.centroid],
             inertia_in_element_frame = mass_properties[MassAttributes.inertia]
         )
-        breakpoint()
         
+
+# TODO: combine subassemblies into a single mass property thing
 
 def _build_subassemblies_map(subassemblies: list) -> dict:
     """Constructs a map of subassembly element id to subassembly information.
@@ -283,8 +289,12 @@ def _add_instances_mass_properties(onshape_client: Client, instances: list, mass
             continue
         did = instance[CommonAttributes.documentId]
         eid = instance[CommonAttributes.elementId]
-        wvm = "m" # TODO: Check if document microversions are a consistent thing across all subassemblies
-        wvmid = instance[CommonAttributes.documentMicroversion]
+        if CommonAttributes.version in instance:
+            wvm = API.version
+            wvmid = instance[CommonAttributes.version]
+        else:
+            wvm = API.microversion
+            wvmid = instance[CommonAttributes.documentMicroversion]
         if PartAttributes.partId in instance:
             part_id = instance[PartAttributes.partId]
             response = onshape_client.part_mass_properties(did=did, wvmid=wvmid, eid=eid, partid=part_id, wvm=wvm)
@@ -319,7 +329,7 @@ def _build_mass_properties_map(onshape_client: Client, instances: list, subassem
         _add_instances_mass_properties(onshape_client, subassembly[APIAttributes.instances], mass_properties_map)
     return mass_properties_map
 
-def _build_features_map(features: list) -> dict:
+def _build_features_map(features: list, subassemblies: list) -> dict:
     """Constructs a map of path and mate data.
 
     Mapping path to the feature data of the mate. This is because mates occur between instances of objects, but they 
@@ -333,6 +343,9 @@ def _build_features_map(features: list) -> dict:
         A mapping of occurrence ids to mates
     """
     features_map = {}
+    for subassembly in json_assembly_data[APIAttributes.subassemblies]:
+        occurrence_path = 
+        assembly_features += subassembly[APIAttributes.features]
     for feature in features:
         mated_entities = feature[FeatureAttributes.featureData][FeatureAttributes.matedEntities]
         mate_type = feature[FeatureAttributes.featureData][FeatureAttributes.mateType]
@@ -344,11 +357,11 @@ def _build_features_map(features: list) -> dict:
         if entity_one_path == "":
             parent_entity = mated_entities[0]
             parent_path = entity_one_path
-            child_entity = mated_entities[1]
+            child_path = mated_entities[1]
         else:
             parent_entity = mated_entities[1]
             parent_path = entity_two_path
-            child_entity = mated_entities[0]
+            child_path = mated_entities[0]
         parent_info = {
             FeatureAttributes.children: [],
             FeatureAttributes.is_parent: True,
@@ -357,22 +370,25 @@ def _build_features_map(features: list) -> dict:
         }
         # Based on docs, onshape forces mates to have 2 things
         # Initialize the child information
-        child_info = {
-            FeatureAttributes.parent: parent_path,
-            FeatureAttributes.is_parent: False,
-            FeatureAttributes.mateType: mate_type,
-            CommonAttributes.name: mate_name,
-        }
-        child_path = "".join(child_entity[FeatureAttributes.matedOccurrence])
-        child_info[CommonAttributes.transform] = get_element_tform_mate(child_entity[FeatureAttributes.matedCS])
         parent_info[FeatureAttributes.children]= child_path
         # Extract the transform from the parent
         parent_info[CommonAttributes.transform] = get_element_tform_mate(parent_entity[FeatureAttributes.matedCS])
+
+        # TODO: Check if we still need this eventually
+        # child_info = {
+        #     FeatureAttributes.parent: parent_path,
+        #     FeatureAttributes.is_parent: False,
+        #     FeatureAttributes.mateType: mate_type,
+        #     CommonAttributes.name: mate_name,
+        # }
+        # child_path = "".join(child_entity[FeatureAttributes.matedOccurrence])
+        # child_info[CommonAttributes.transform] = get_element_tform_mate(child_entity[FeatureAttributes.matedCS])
+        # if child_path in features_map:
+        #     features_map[child_path].append(child_info)
+        # else:
+        #     features_map[child_path] = [child_info]
+
         # Check and add the information into the feature map
-        if child_path in features_map:
-            features_map[child_path].append(child_info)
-        else:
-            features_map[child_path] = [child_info]
         if parent_path in features_map:
             features_map[parent_path].append(parent_info)
         else:
@@ -387,8 +403,14 @@ def _add_instances_metadata(onshape_client: Client, instances: list, metadata_ma
             continue
         did = instance[CommonAttributes.documentId]
         eid = instance[CommonAttributes.elementId]
-        wvm = "m" # TODO: Check if document microversions are a consistent thing across all subassemblies
-        wvmid = instance[CommonAttributes.documentMicroversion]
+        # Check if we want to use the version of the microversion
+        if CommonAttributes.version in instance:
+            wvm = API.version
+            wvmid = instance[CommonAttributes.version]
+        else:
+            wvm = API.microversion # TODO: Check if document microversions are a consistent thing across all subassemblies
+            wvmid = instance[CommonAttributes.documentMicroversion]
+        # Check if it's a part or assembly
         if PartAttributes.partId in instance:
             part_id = instance[PartAttributes.partId]
             response = onshape_client.part_metadata(did=did, wvmid=wvmid, eid=eid, partid=part_id, wvm=wvm)
@@ -459,7 +481,12 @@ def build_tree(json_assembly_data: dict, robot_name: str) -> OnshapeTreeNode:
     # TODO see if this is necessary later
     root_dict[CommonAttributes.name] = CommonAttributes.root
     root_subassemblies = _build_subassemblies_map(json_assembly_data[APIAttributes.subassemblies])
-    root_mates = _build_features_map(root_dict[APIAttributes.features])
+    assembly_features = root_dict[APIAttributes.features]
+    # Add in the ability to recurse into the subassembly later for other joints
+    for subassembly in json_assembly_data[APIAttributes.subassemblies]:
+        occurrence_path = 
+        assembly_features += subassembly[APIAttributes.features]
+    root_mates = _build_features_map(assembly_features, json_assembly_data[APIAttributes.subassemblies])
     root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
     root_instances = root_dict[APIAttributes.instances]
     root_metadata = _build_metadata_map(
@@ -472,8 +499,8 @@ def build_tree(json_assembly_data: dict, robot_name: str) -> OnshapeTreeNode:
         root_instances,
         json_assembly_data[APIAttributes.subassemblies]
         )
-    # breakpoint()
     root_node = OnshapeTreeNode(name=robot_name, element_dict=root_dict)
+    breakpoint()
     build_tree_helper(
         root_node,
         root_subassemblies,
@@ -556,6 +583,7 @@ def build_tree_helper(
             if is_rigid:
                 root.rigid_bodies.append(child_node)
 
+            # TODO: see if we can set the base case to a rigid body. Need to find the nearest rigid body
             # Base case: we hit a part. Add the child to the node and skip adding it to the queue
             if instance[CommonAttributes.elementType] == ElementAttributes.part:
                 next_node.add_child(child_node)
@@ -568,7 +596,11 @@ def build_tree_helper(
             next_node.add_child(child_node)
 
 
-def download_all_rigid_bodies_meshes(root: OnshapeTreeNode, data_directory: str = "", file_type: str = API.stl) -> list:
+def download_all_rigid_bodies_meshes(
+    rigid_bodies: Sequence[dict],
+    data_directory: str = "",
+    file_type: str = API.stl
+    ) -> list:
     """Downloads the STL associated with each part inside the document.
     
     Returns:
@@ -576,62 +608,47 @@ def download_all_rigid_bodies_meshes(root: OnshapeTreeNode, data_directory: str 
     """
     rigid_bodies_seen = set()
     mesh_names = []
-    for rigid_body in root.rigid_bodies:
+    for rigid_body in rigid_bodies:
         rigid_body_data = rigid_body.element_dict
-        # part_data = part.element_dict
         if CommonAttributes.version in rigid_body_data:
-            wvm = "v"
+            wvm = API.version
             wvmid = rigid_body_data[CommonAttributes.version]
         elif CommonAttributes.documentMicroversion in rigid_body_data:
-            wvm = "m"
+            wvm = API.microversion
             wvmid = rigid_body_data[CommonAttributes.documentMicroversion]
         else:
-            wvm = "w"
+            wvm = API.workspace
             wvmid = rigid_body_data[CommonAttributes.workspace]
+        did = rigid_body_data[CommonAttributes.documentId]
         eid = rigid_body_data[CommonAttributes.elementId]
-        # Check if it's a part or if it's a assembly
-        try:
-            part_id = part_data[PartAttributes.partId]
-            did = part_data[CommonAttributes.documentId]
-            part_hash = join_api_url(did, eid, part_id)
-            match file_type:
-                case API.stl:
-                    part_mesh = onshape_client.part_export_stl(did=did, wvm=wvm, wvmid=wvmid, eid=eid, part_id=part_id)
-                case API.gltf:
-                    part_mesh = onshape_client.part_export_gltf(did=did, wvm=wvm, wvmid=wvmid, eid=eid, part_id=part_id)
-            mesh_filename = check_and_append_extension(
-                "".join((part_data[CommonAttributes.name].split(" "))[:-1]).lower(),
-                file_type
-            )
-        except KeyError:
-            # TODO: implement the assembly STL removale
-            pass
-
-            
-        mesh_path = os.path.join(data_directory, mesh_filename)
-        with open(mesh_path, "wb") as mesh_file:
-            mesh_file.write(part_mesh.content)
-            
-
-        part_id = part_data[PartAttributes.partId]
-        did = part_data[CommonAttributes.documentId]
-        part_hash = did + "/" + eid + "/" + part_id
-        if part_hash in rigid_bodies_seen:
-            continue
-        rigid_bodies_seen.add(part_hash)
-
-        match file_type:
-            case API.stl:
-                part_mesh = onshape_client.part_export_stl(did=did, wvm=wvm, wvmid=wvmid, eid=eid, part_id=part_id)
-            case API.gltf:
-                part_mesh = onshape_client.part_export_gltf(did=did, wvm=wvm, wvmid=wvmid, eid=eid, part_id=part_id)
         mesh_filename = check_and_append_extension(
-            "".join((part_data[CommonAttributes.name].split(" "))[:-1]).lower(),
+            "".join((rigid_body.name.split(" "))[:-2]).lower(),
             file_type
         )
         mesh_path = os.path.join(data_directory, mesh_filename)
-        with open(mesh_path, "wb") as mesh_file:
-            mesh_file.write(part_mesh.content)
+        # Check if it's a part or if it's a assembly
+        if PartAttributes.partId in rigid_body_data:
+            rigid_body_id = rigid_body_data[PartAttributes.partId]
+            rigid_body_hash = join_api_url(did, eid, rigid_body_id)
+            if rigid_body_hash in rigid_bodies_seen:
+                continue
+            rigid_bodies_seen.add(rigid_body_hash)
+            rigid_body_mesh = onshape_client.part_stl_pipeline(
+                did=did, wvm=wvm, wvmid=wvmid, eid=eid, part_id=rigid_body_id, filename=mesh_path,
+            )
+        else:
+            rigid_body_hash = join_api_url(did, eid)
+            if rigid_body_hash in rigid_bodies_seen:
+                continue
+            rigid_bodies_seen.add(rigid_body_hash)
+            rigid_body_mesh = onshape_client.assembly_stl_pipeline(
+                did=did,
+                wvm=wvm,
+                wvmid=wvmid,
+                eid=eid,
+                meshname=mesh_filename,
+                filename=mesh_path,
+            )
         mesh_names.append(mesh_filename)
     return mesh_names
 
@@ -656,8 +673,6 @@ def create_onshape_tree(
 
 def main():
     # TODO: add this credentials things (client = Client(creds=""))
-    # with open("../test/data/multi_features_sub_assembly.txt", "r") as fi:
-    #     json_data = json.load(fi)
     # did = "6041e7103bb40af449a81618"
     # wvmid = "7e51d7b6b381bd79481e2033"
     # eid = "aad7f639435879b7135dce0f"
@@ -674,23 +689,10 @@ def main():
     # eid = "aad7f639435879b7135dce0f"
     wvm = "v"
     test = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid)
-    # document_name = onshape_client.get_document(did=did)[CommonAttributes.name]
-    # json_data = onshape_client.assembly_definition(
-    #     did=did,
-    #     wvmid=wvmid,
-    #     eid=eid,
-    #     wvm=wvm,
-    #     )
-    # # # print(json_data)
-    # test = build_tree(json_data, robot_name=document_name)
     test.print_transforms()
     test.print_children()
     print(test.joint_parents)
-    # No long implemented: test.print_joint_info()
     test.print_mass_properties()
-    # print(test.rigid_bodies)
-    # print(test.occurrence_id_to_node)
-    # download_all_rigid_bodies_stls(test, "test")
 
 
 if __name__ == "__main__":

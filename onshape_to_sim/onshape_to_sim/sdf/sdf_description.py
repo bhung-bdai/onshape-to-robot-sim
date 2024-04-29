@@ -1,6 +1,7 @@
 from typing import Any, Optional
 import math
 import os
+import pdb
 import uuid
 
 import numpy as np
@@ -264,12 +265,15 @@ class RobotSDF():
 
     world_frame: str = "world_frame"
 
-    def __init__(self, onshape_root: OnshapeTreeNode, mesh_directory: str):
+    def __init__(self, onshape_root: OnshapeTreeNode, mesh_directory: str, sdf_name: Optional[str] = None):
         self.robot_name = onshape_root.name
         self.sdf_root = Root()
         self.mesh_directory = mesh_directory
         model = Model()
-        model.set_name(self.robot_name)
+        if sdf_name is None:
+            model.set_name(self.robot_name)
+        else:
+            model.set_name(sdf_name)
         model.add_frame(make_frame_object(self.world_frame))
         self.sdf_root.set_model(model)
         self._build_sdf(onshape_root)
@@ -303,12 +307,14 @@ class RobotSDF():
         # print(parent_link)
         for joint in joint_info:
             child = joint[FeatureAttributes.children]
-            child_node = occurrence_id_to_node[child]
+            child_occurrence_id = "".join(child[FeatureAttributes.matedOccurrence])
+            child_node = occurrence_id_to_node[child_occurrence_id]
             gz_mate_type = onshape_mate_to_gz_mate(joint[FeatureAttributes.mateType])
-            joint_t_world = joint[FeatureAttributes.transform]
-            joint_pose_gz = make_pose_gz(
-                joint_t_world[:3, 3],
-                rotationMatrixToEulerAngles(joint_t_world[:3, :3])
+            element_tform_joint = joint[FeatureAttributes.transform]
+            world_tform_joint = child_node.world_tform_element @ element_tform_joint
+            joint_wrt_world_gz = make_pose_gz(
+                world_tform_joint[:3, 3],
+                rotationMatrixToEulerAngles(world_tform_joint[:3, :3])
             )
             # Fix the base link to the origin
 
@@ -343,7 +349,7 @@ class RobotSDF():
             # # print(parent_transform)
             # joint_transform = joint_transform @ parent_transform
             # print(f"Joint {parent_link} : {joint_pose_gz}")
-            joint_sdf.set_raw_pose(joint_pose_gz)
+            joint_sdf.set_raw_pose(joint_wrt_world_gz)
             joint_sdf.set_name(joint[CommonAttributes.name])
             # TODO implement the rest of the joints types later
             match gz_mate_type:
@@ -356,7 +362,8 @@ class RobotSDF():
                     # TODO: include stiffness, damping, dynamics, etc
                     # TODO: include gearing and gearbox ratios
                     # TODO: include the position velocity and effort limits
-                    # Both of the above need to be added in metadata I think. 
+                    # Both of the above need to be added in metadata I think.
+                    # breakpoint()
                     pass
                 case JointTypeMap.fixed:
                     print(joint_sdf.raw_pose())
@@ -522,8 +529,6 @@ class RobotSDF():
         visual_sdf.set_raw_pose(visual_pose_in_world_gz)
         visual_sdf.set_material(material_sdf)
         link_sdf.add_visual(visual_sdf)
-
-        # TODO!!! Open3d stl not working, need to get .objs
         
         # Add the link to the the model
         self.sdf_root.model().add_link(link_sdf)

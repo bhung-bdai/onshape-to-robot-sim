@@ -44,6 +44,7 @@ class API:
     metadata: str = "metadata"
     metadata_part: str = "p"
     microversion: str = "m"
+    non_solids: str = "includeNonSolids"
     obj: str = "obj"
     part_id: str = "partid"
     parts: str = "parts"
@@ -170,34 +171,6 @@ def get_relevant_metadata(metadata_list: list, relevant_metadata: set) -> dict:
         if (name := metadata[CommonAttributes.name]) in relevant_metadata:
             metadata_value_map[name] = metadata[CommonAttributes.value]
     return metadata_value_map
-
-
-# def separate_objs(assembly_obj_file: str, assembly_mtl_file: str, save_dir: str = "") -> None:
-#     """Separates an assembly obj file into its constituent parts
-
-#     Meshes are denominated by a `g <name of the part>`. This should match the simplified name of the obj in the node.
-#     Each of these should also include a material denoted `usemtl <identifier>`.
-    
-#     Args:
-#         assembly_obj_file: obj file containing the entire assembly
-#         assembly_mtl_file: mtl file for the entire assembly
-#     """
-#     mesh_delimiter = "g"
-#     obj_mtl_delimiter = "usemtl"
-#     mtl_delimiter = "newmtl"
-#     assembly_obj_file = check_and_append_extension(assembly_obj_file, API.obj)
-#     with open(assembly_obj_file, "r") as obj_file:
-#         obj_dump = obj_file.read()
-#         obj_items = delimiter_separator(obj_dump, mesh_delimiter)
-#     for obj_filename, obj_data in obj_items.items():
-#         obj_save_file = os.path.join(save_dir, check_and_append_extension(obj_filename, API.obj))
-#         with open(obj_save_file, "w") as fi:
-#             fi.write(obj_data)
-#     print(len(obj_items))
-#     print(obj_items.keys())
-#     # with open(assembly_mtl_file, "r") as mtl_file:
-#     #     mtl_dump = mtl_file.read()
-#     #     mtl_items = obj_dump.split(mtl_delimiter)[1:]
 
 
 def check_and_append_extension(filename: str, extension: str) -> str:

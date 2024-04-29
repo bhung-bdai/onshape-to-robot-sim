@@ -1,5 +1,8 @@
 from typing import Union
 import json
+import pdb
+import pickle
+import sys
 
 import numpy as np
 
@@ -7,7 +10,7 @@ from onshape_to_sim.onshape_api.client import Client
 from onshape_to_sim.onshape_api.onshape_tree import (
     build_tree,
     create_onshape_tree,
-    # download_all_parts_meshes,
+    download_all_rigid_bodies_meshes,
     _add_instances_mass_properties,
     _build_mass_properties_map
 )
@@ -15,6 +18,7 @@ from onshape_to_sim.onshape_api.utils import (
     API,
     convert_stls_to_objs,
 )
+from onshape_to_sim.sdf.sdf_description import RobotSDF
 
 onshape_client = Client(creds="test_config.json", logging=False)
 
@@ -106,36 +110,111 @@ def test_mass_properties_map():
 
 
 def test_stl_download():
-    # d2b65b007cccdccd672c9efe/v/89942609c596c269771f7d84/e/d64d0511810bd7d9d742d1bb
-    did = "d2b65b007cccdccd672c9efe"
-    wvmid = "89942609c596c269771f7d84"
-    eid = "d64d0511810bd7d9d742d1bb"
+    # f = open('output.txt','w')
+    # sys.stdout = f
+    did = "dc7bc8baf40949ec82a161ab"
+    wvmid = "f403096346539d04d483a5e3"
+    eid = "e246deec97cc75cedfed8035"
     wvm = "v"
-    stl_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
-    obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
-    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="simple_arm")
-    mesh_files = download_all_parts_meshes(tree, data_directory=stl_dir, file_type=API.stl)
-    convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    print("Creating tree...")
+    # tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="throwy")
+    # with open("throwy_tree.pickle", "wb") as fi:
+    #     pickle.dump(tree, fi)
+    with open("throwy_tree.pickle", "rb") as fi:
+        tree = pickle.load(fi)
+    # item = tree.search_by_occurrence_id("MFsBZ/Px6SfioMMrpMDRYr4POebo8qzdQh")
+    # breakpoint()
+    print("Creating SDF...")
+    test_sdf = RobotSDF(tree, mesh_directory="/workspaces/bdai/test/sdf_viewr/throwy")
+    test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/throwy/throwy")
+    rigid_bodies = tree.rigid_bodies
+    with open("throwy_dict.pickle", "wb") as fi:
+        pickle.dump(rigid_bodies, fi)
+    with open("throwy_dict.pickle", "rb") as fi:
+        rigid_bodies = pickle.load(fi)
+    # breakpoint()
+    print("Downloading meshes...")
+    try:
+        mesh_files = download_all_rigid_bodies_meshes(
+            rigid_bodies, data_directory=stl_dir, file_type=API.stl
+        )
+        convert_stls_to_objs(
+            mesh_files,
+            stl_dir,
+            obj_dir,
+            "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+        )
+    except Exception as e:
+        pdb.post_mortem()
+
+
+def test_full_pipeline():
+    # f = open('output.txt','w')
+    # sys.stdout = f
+    # bf00afda41c872721af031c9/v/ee2d293125671a90033598ff/e/2c6cc034f38ef101337dcb9f
+    did = "bf00afda41c872721af031c9"
+    wvmid = "a0a05ea9d3ac08f6f9cd3e6a"
+    eid = "2c6cc034f38ef101337dcb9f"
+    wvm = "v"
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    sdf_path = "/home/bhung/bdai/test/sdf_viewr/throwy"
+    sdf_name = "throwy_hand"
+    print("Creating tree...")
+    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name=sdf_name)
+    with open(f"{sdf_name}_tree.pickle", "wb") as fi:
+        pickle.dump(tree, fi)
+    # with open(f"{sdf_name}_tree.pickle", "rb") as fi:
+    #     tree = pickle.load(fi)
+    # item = tree.search_by_occurrence_id("MFsBZ/Px6SfioMMrpMDRYr4POebo8qzdQh")
+    # breakpoint()
+    print("Creating SDF...")
+    test_sdf = RobotSDF(tree, mesh_directory=sdf_path, sdf_name=sdf_name)
+    test_sdf.write_sdf(f"{sdf_path}/{sdf_name}")
+    rigid_bodies = tree.rigid_bodies
+    with open(f"{sdf_name}_dict.pickle", "wb") as fi:
+        pickle.dump(rigid_bodies, fi)
+    # with open("throwy_dict.pickle", "rb") as fi:
+    #     rigid_bodies = pickle.load(fi)
+    # # breakpoint()
+    print("Downloading meshes...")
+    try:
+        mesh_files = download_all_rigid_bodies_meshes(
+            rigid_bodies, data_directory=stl_dir, file_type=API.stl
+        )
+        convert_stls_to_objs(
+            mesh_files,
+            stl_dir,
+            obj_dir,
+            "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+        )
+    except Exception as e:
+        pdb.post_mortem()
 
 
 def stl_converter(stl_dir: str, obj_dir: str, mesh_files: str, stl_to_obj_location: str) -> None:
     # stl_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
     # obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
     # tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="simple_arm")
-    # mesh_files = download_all_parts_meshes(tree, data_directory=stl_dir, file_type=API.stl)
+    # mesh_files = download_all_rigid_bodies_meshes(tree, data_directory=stl_dir, file_type=API.stl)
     convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
 
 
 if __name__ == "__main__":
+    # test_stl_download()
+    test_full_pipeline()
     # test_mass_properties_map()
-    stl_obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
-    mesh_files = ["base.stl", "part_assem.stl", "x_shaft.stl", "y_shaft.stl", "z_shaft.stl"]
-    stl_converter(
-        stl_obj_dir,
-        stl_obj_dir,
-        mesh_files,
-        "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
-    )
+    # stl_obj_dir =  "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    # mesh_files = ["base.stl", "part_assem.stl", "x_shaft.stl", "y_shaft.stl", "z_shaft.stl"]
+    # mesh_files = ["elbowdrive.stl", "forearm.stl", "housing.stl", "rotor.stl", "uaassembly.stl"]
+    # stl_converter(
+    #     stl_obj_dir,
+    #     stl_obj_dir,
+    #     mesh_files,
+    #     "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+    # )
 
     # test_stl_download()
 
