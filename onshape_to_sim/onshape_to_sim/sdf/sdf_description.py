@@ -269,6 +269,8 @@ class RobotSDF():
         self.robot_name = onshape_root.name
         self.sdf_root = Root()
         self.mesh_directory = mesh_directory
+        if not os.path.isdir(mesh_directory):
+            os.mkdir(mesh_directory)
         model = Model()
         if sdf_name is None:
             model.set_name(self.robot_name)
@@ -305,6 +307,7 @@ class RobotSDF():
         """ 
         # Loops through all the joints in the parent and creates a joint
         # print(parent_link)
+        print(joint_info)
         for joint in joint_info:
             child = joint[FeatureAttributes.children]
             child_occurrence_id = "".join(child[FeatureAttributes.matedOccurrence])

@@ -4,7 +4,7 @@ utils
 
 Handy functions for API key sample app
 '''
-
+from typing import Optional
 from dataclasses import dataclass, asdict
 import logging
 from logging.config import dictConfig
@@ -180,7 +180,12 @@ def check_and_append_extension(filename: str, extension: str) -> str:
     return f"{filename}.{extension}"
 
 
-def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "", path_to_onshape_api = "") -> None:
+def convert_stls_to_objs(
+    stl_files: list,
+    stl_dir: Optional[str] = None,
+    save_dir: Optional[str] = None,
+    path_to_onshape_api: Optional[str] = None,
+    ) -> None:
     """Given a list of stl files, saves them as .objs with the same name
 
     Args:
@@ -189,7 +194,20 @@ def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "",
         save_dir: the directory we want to save the .obj files to
     """
     # TODO: Figure out how to fix this later with an absolute path
-    stl_to_obj = os.path.join(path_to_onshape_api, "./stl2obj")
+    stl_to_obj = "./stl2obj"
+    if path_to_onshape_api is not None:
+        stl_to_obj = os.path.join(path_to_onshape_api, stl_to_obj)
+    # Create the stl save directory if it doesn't exist
+    if stl_dir is not None and not os.path.isdir(stl_dir):
+        os.mkdir(stl_dir)
+    elif stl_dir is None:
+        stl_dir = ""
+    # Create the obj save directory if it doesn't exist
+    if save_dir is not None and not os.path.isdir(save_dir):
+        os.mkdir(save_dir)
+    elif save_dir is None:
+        save_dir = ""
+    
     for stl in stl_files:
         obj_filename = stl.split(".")[0]
         obj_path = os.path.join(save_dir, check_and_append_extension(obj_filename, API.obj))

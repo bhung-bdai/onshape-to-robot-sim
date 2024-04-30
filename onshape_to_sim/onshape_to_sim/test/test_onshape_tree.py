@@ -154,35 +154,56 @@ def test_full_pipeline():
     # f = open('output.txt','w')
     # sys.stdout = f
     # bf00afda41c872721af031c9/v/ee2d293125671a90033598ff/e/2c6cc034f38ef101337dcb9f
-    did = "bf00afda41c872721af031c9"
-    wvmid = "a0a05ea9d3ac08f6f9cd3e6a"
-    eid = "2c6cc034f38ef101337dcb9f"
+    # d2b65b007cccdccd672c9efe/v/8b21eaeb7705b07014b18f35/e/d64d0511810bd7d9d742d1bb
+    ############## THROWY HAND ######################
+    # did = "bf00afda41c872721af031c9"
+    # wvmid = "a0a05ea9d3ac08f6f9cd3e6a"
+    # eid = "2c6cc034f38ef101337dcb9f"
+    # wvm = "v"
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    # sdf_path = "/home/bhung/bdai/test/sdf_viewr/throwy"
+    # sdf_name = "throwy_hand"
+    ##################################################
+    ############## SIMPLE ARM #######################
+    did = "d2b65b007cccdccd672c9efe"
+    wvmid = "6798c9b07bd476ed792df435"
+    eid = "d64d0511810bd7d9d742d1bb"
     wvm = "v"
-    stl_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
-    obj_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
-    sdf_path = "/home/bhung/bdai/test/sdf_viewr/throwy"
-    sdf_name = "throwy_hand"
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/basic_arm/basic_arm"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/basic_arm/basic_arm"
+    sdf_path = "/home/bhung/bdai/test/sdf_viewr/basic_arm"
+    sdf_name = "basic_arm"
+    ####################################################
+    # ############### HARDER ARM #######################
+    # did = "9e58c2c2298902a0b2526461"
+    # wvmid = "cf0d6030ccb0d5a12e0a9b91"
+    # eid = "5048884906d62c21e634d119"
+    # wvm = "v"
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/harder_arm/harder_arm"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/harder_arm/harder_arm"
+    # sdf_path = "/home/bhung/bdai/test/sdf_viewr/harder_arm"
+    # sdf_name = "harder_arm"
+    # #####################################################
     print("Creating tree...")
     tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name=sdf_name)
     with open(f"{sdf_name}_tree.pickle", "wb") as fi:
         pickle.dump(tree, fi)
     # with open(f"{sdf_name}_tree.pickle", "rb") as fi:
     #     tree = pickle.load(fi)
-    # item = tree.search_by_occurrence_id("MFsBZ/Px6SfioMMrpMDRYr4POebo8qzdQh")
-    # breakpoint()
     print("Creating SDF...")
     test_sdf = RobotSDF(tree, mesh_directory=sdf_path, sdf_name=sdf_name)
     test_sdf.write_sdf(f"{sdf_path}/{sdf_name}")
-    rigid_bodies = tree.rigid_bodies
-    with open(f"{sdf_name}_dict.pickle", "wb") as fi:
-        pickle.dump(rigid_bodies, fi)
+    # rigid_bodies = tree.rigid_bodies
+    # with open(f"{sdf_name}_dict.pickle", "wb") as fi:
+    #     pickle.dump(rigid_bodies, fi)
     # with open("throwy_dict.pickle", "rb") as fi:
     #     rigid_bodies = pickle.load(fi)
     # # breakpoint()
     print("Downloading meshes...")
     try:
         mesh_files = download_all_rigid_bodies_meshes(
-            rigid_bodies, data_directory=stl_dir, file_type=API.stl
+            tree.rigid_bodies, data_directory=stl_dir, file_type=API.stl
         )
         convert_stls_to_objs(
             mesh_files,

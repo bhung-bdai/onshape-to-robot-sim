@@ -64,8 +64,8 @@ def _create_obj_export_assem_body(
 def _create_stl_export_assem_body(
     stl_name: str,
     resolution: str,
-    ang_tol: float = 0.1,
-    dist_tol: float = 0.0001
+    ang_tol: float = 0.2,
+    dist_tol: float = 0.001
     ) -> dict:
     """Creates the body for an assembly obj export request. 
     

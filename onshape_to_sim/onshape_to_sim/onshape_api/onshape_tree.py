@@ -343,9 +343,10 @@ def _build_features_map(features: list, subassemblies: list) -> dict:
         A mapping of occurrence ids to mates
     """
     features_map = {}
-    for subassembly in json_assembly_data[APIAttributes.subassemblies]:
-        occurrence_path = 
-        assembly_features += subassembly[APIAttributes.features]
+    # TODO @bhung add subassemblies
+    # for subassembly in json_assembly_data[APIAttributes.subassemblies]:
+    #     occurrence_path = 
+    #     assembly_features += subassembly[APIAttributes.features]
     for feature in features:
         mated_entities = feature[FeatureAttributes.featureData][FeatureAttributes.matedEntities]
         mate_type = feature[FeatureAttributes.featureData][FeatureAttributes.mateType]
@@ -483,9 +484,9 @@ def build_tree(json_assembly_data: dict, robot_name: str) -> OnshapeTreeNode:
     root_subassemblies = _build_subassemblies_map(json_assembly_data[APIAttributes.subassemblies])
     assembly_features = root_dict[APIAttributes.features]
     # Add in the ability to recurse into the subassembly later for other joints
-    for subassembly in json_assembly_data[APIAttributes.subassemblies]:
-        occurrence_path = 
-        assembly_features += subassembly[APIAttributes.features]
+    # for subassembly in json_assembly_data[APIAttributes.subassemblies]:
+    #     occurrence_path = 
+    #     assembly_features += subassembly[APIAttributes.features]
     root_mates = _build_features_map(assembly_features, json_assembly_data[APIAttributes.subassemblies])
     root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
     root_instances = root_dict[APIAttributes.instances]
@@ -500,7 +501,7 @@ def build_tree(json_assembly_data: dict, robot_name: str) -> OnshapeTreeNode:
         json_assembly_data[APIAttributes.subassemblies]
         )
     root_node = OnshapeTreeNode(name=robot_name, element_dict=root_dict)
-    breakpoint()
+    # breakpoint()
     build_tree_helper(
         root_node,
         root_subassemblies,
@@ -606,6 +607,8 @@ def download_all_rigid_bodies_meshes(
     Returns:
         A list containing the names of each rigid body we want to render in the viusalizer
     """
+    if data_directory != "" and not os.path.isdir(data_directory):
+        os.mkdir(data_directory)
     rigid_bodies_seen = set()
     mesh_names = []
     for rigid_body in rigid_bodies:
