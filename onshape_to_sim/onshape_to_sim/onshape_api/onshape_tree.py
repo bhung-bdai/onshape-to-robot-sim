@@ -28,7 +28,9 @@ from onshape_to_sim.onshape_api.utils import (
     join_api_url,
 )
 from onshape_to_sim.utils import (
-    express_mass_properties_in_world_frame
+    express_mass_properties_in_world_frame,
+    load_from_pickle,
+    save_in_pickle,
 )
 
 # TODO: figure out if this is going to be here later
@@ -37,6 +39,7 @@ onshape_client = Client(creds="test_config.json", logging=False)
 
 part_relevant_metadata = set(("Rigid Body",))
 assembly_relevant_metadata = set(("Rigid Body",))
+
 
 def get_element_tform_mate(mated_cs: dict) -> npt.ArrayLike:
     element_tform_mate = np.eye(4)
@@ -85,8 +88,7 @@ class OnshapeTreeNode():
         self.has_mass = False
         self.volume = 0.0
         self.links = [] # For root only
-        self.rigid_bodies = [] # For root only
-        self.occurrence_id_to_node = {} # For root only
+        self.occurrence_id_to_rigid_body_node = {} # For root only
         self.internal_naming = {} # For root only
         self.joint_parents = {} # For root only TODO rename this
 
@@ -110,8 +112,8 @@ class OnshapeTreeNode():
     def get_rigid_bodies(self):
         return self.rigid_bodies
 
-    def get_occurrence_id_to_node(self):
-        return self.occurrence_id_to_node
+    def get_occurrence_id_to_rigid_body_node(self):
+        return self.occurrence_id_to_rigid_body_node
 
     def add_child(self, child_node: OnshapeTreeNode) -> None:
         """Append a new node to this node's list of children.""" 
@@ -217,7 +219,7 @@ class OnshapeTreeNode():
             parent = parent.parent_node
         return link_name
 
-    def _add_mass_properties(self, mass_properties_map: dict) -> None:
+    def _add_mass_properties(self) -> None:
         """Adds information about the mass, com, and inertia into the element.
 
         These values are all expressed in the element's own frame. They need to be mapped into the world frame using the
@@ -226,7 +228,24 @@ class OnshapeTreeNode():
         Args:
             mass_properties_map: mapping of instance id to mass properties
         """
-        mass_properties = mass_properties_map[self.node_id]
+        did = self.element_dict[CommonAttributes.documentId]
+        eid = self.element_dict[CommonAttributes.elementId]
+        if CommonAttributes.version in self.element_dict:
+            wvm = API.version
+            wvmid = self.element_dict[CommonAttributes.version]
+        else:
+            wvm = API.microversion
+            wvmid = self.element_dict[CommonAttributes.documentMicroversion]
+        if PartAttributes.partId in self.element_dict:
+            part_id = self.element_dict[PartAttributes.partId]
+            response = onshape_client.part_mass_properties(did=did, wvmid=wvmid, eid=eid, partid=part_id, wvm=wvm)
+            # TODO figure out if it's always 1 item. It should be
+            masses = [response[MassAttributes.bodies][part_id]]
+        else:
+            # Is an assembly
+            response = onshape_client.assembly_mass_properties(did=did, wvmid=wvmid, eid=eid, wvm=wvm)
+            masses = [response]
+        mass_properties = _extract_mass_properties(masses[0])
         self.volume = mass_properties[MassAttributes.volume]
         self.has_mass = mass_properties[MassAttributes.hasMass]
         self.mass, self.com_wrt_world, self.inertia_wrt_world = express_mass_properties_in_world_frame(
@@ -469,7 +488,13 @@ def _build_occurrences_map(occurrences: list) -> dict:
     return occurrences_map
         
 
-def build_tree(json_assembly_data: dict, robot_name: str) -> OnshapeTreeNode:
+def build_tree(
+    json_assembly_data: dict,
+    robot_name: str,
+    store_data: bool = False,
+    load_from_file: bool = False,
+    file_path: str = ""
+    ) -> OnshapeTreeNode:
     """Given a JSON Onshape API call for the elements in an assembly, return a tree representing the entire assembly.
     
     Args:
@@ -478,38 +503,50 @@ def build_tree(json_assembly_data: dict, robot_name: str) -> OnshapeTreeNode:
     Returns:
         The root of the Onshape tree
     """
-    root_dict = json_assembly_data[APIAttributes.rootAssembly]
-    # TODO see if this is necessary later
-    root_dict[CommonAttributes.name] = CommonAttributes.root
-    root_subassemblies = _build_subassemblies_map(json_assembly_data[APIAttributes.subassemblies])
-    assembly_features = root_dict[APIAttributes.features]
-    # Add in the ability to recurse into the subassembly later for other joints
-    # for subassembly in json_assembly_data[APIAttributes.subassemblies]:
-    #     occurrence_path = 
-    #     assembly_features += subassembly[APIAttributes.features]
-    root_mates = _build_features_map(assembly_features, json_assembly_data[APIAttributes.subassemblies])
-    root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
-    root_instances = root_dict[APIAttributes.instances]
-    root_metadata = _build_metadata_map(
-        onshape_client,
-        root_instances,
-        json_assembly_data[APIAttributes.subassemblies]
-        )
-    root_mass_properties = _build_mass_properties_map(
-        onshape_client,
-        root_instances,
-        json_assembly_data[APIAttributes.subassemblies]
-        )
+    if load_from_file:
+        all_items = load_from_pickle(file_path)
+        return all_items["tree"]
+    else:
+        root_dict = json_assembly_data[APIAttributes.rootAssembly]
+        root_dict[CommonAttributes.name] = CommonAttributes.root
+        root_subassemblies = _build_subassemblies_map(json_assembly_data[APIAttributes.subassemblies])
+        assembly_features = root_dict[APIAttributes.features]
+        # TODO: Add in the ability to recurse into the subassembly later for other joints
+        # for subassembly in json_assembly_data[APIAttributes.subassemblies]:
+        #     occurrence_path = 
+        #     assembly_features += subassembly[APIAttributes.features]
+        root_mates = _build_features_map(assembly_features, json_assembly_data[APIAttributes.subassemblies])
+        root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
+        root_instances = root_dict[APIAttributes.instances]
+        root_metadata = _build_metadata_map(
+            onshape_client,
+            root_instances,
+            json_assembly_data[APIAttributes.subassemblies]
+            )
+        # root_mass_properties = _build_mass_properties_map(
+        #     onshape_client,
+        #     root_instances,
+        #     json_assembly_data[APIAttributes.subassemblies]
+        #     )
+
     root_node = OnshapeTreeNode(name=robot_name, element_dict=root_dict)
-    # breakpoint()
     build_tree_helper(
         root_node,
         root_subassemblies,
         root_mates,
         root_occurrences,
-        root_mass_properties,
         root_metadata,
         )
+    if store_data:
+        all_items = {}
+        all_items["tree"] = root_node
+        all_items[CommonAttributes.root] = root_dict
+        all_items[APIAttributes.subassemblies] = root_subassemblies
+        all_items[APIAttributes.features] = root_mates
+        all_items[APIAttributes.occurrences] = root_occurrences
+        all_items[API.metadata] = root_metadata
+        # all_items[API.mass_properties] = root_mass_properties
+        save_in_pickle(all_items, file_path)
     return root_node
 
 
@@ -518,7 +555,6 @@ def build_tree_helper(
     document_subassemblies: dict,
     document_mates: dict,
     document_occurrences: dict,
-    document_mass_properties: dict,
     document_metadata: dict,
     ) -> None:
     """Helper function which, given the root node and API document information, fills out the tree with nodes.
@@ -540,8 +576,10 @@ def build_tree_helper(
         next_node._initialize_node(document_occurrences, document_mates, root.joint_parents)
         if is_root_node:
             is_root_node = False
-        else:
-            next_node._add_mass_properties(document_mass_properties)
+        # Note to self: we skip this one's mass properties because the informtion is already there.
+        # Basically the only one that gets called without being a child first is the root.
+        # Root doesn't have mass properties so it doens't matter, and we only need to add mass 
+        # properties for the children
         # Iterate through the elements in the API instances 
         for instance in next_element[APIAttributes.instances]:
             # Create a child node
@@ -563,7 +601,7 @@ def build_tree_helper(
                     is_rigid = metadata["Rigid Body"]
                 except KeyError:
                     # Rigid Body isn't a property, so we skip it 
-                    is_rigid = False
+                    pass
 
             child_node = OnshapeTreeNode(
                 depth=next_node.depth+1,
@@ -574,15 +612,16 @@ def build_tree_helper(
                 parent_node=next_node,
                 is_rigid_body=is_rigid
                 )
-            root.occurrence_id_to_node[child_node.occurrence_id] = child_node
             # Add information about the occurrences and mates
             child_node._initialize_node(document_occurrences, document_mates, root.joint_parents)
             # Recalculate the COM and inertia wrt world frame, given by occurrence transform
-            child_node._add_mass_properties(document_mass_properties)
 
             # Check if the object is a rigid body or not
             if is_rigid:
-                root.rigid_bodies.append(child_node)
+                child_node._add_mass_properties()
+                root.occurrence_id_to_rigid_body_node[child_node.occurrence_id] = child_node
+                # TODO: integrate this more smoothly later on
+                continue
 
             # TODO: see if we can set the base case to a rigid body. Need to find the nearest rigid body
             # Base case: we hit a part. Add the child to the node and skip adding it to the queue
@@ -661,7 +700,10 @@ def create_onshape_tree(
     wvmid: str,
     eid: str,
     wvm: str,
-    robot_name: Optional[str] = None
+    store_data: bool = False,
+    load_data: bool = False,
+    file_path: bool = False,
+    robot_name: Optional[str] = None,
     ) -> OnshapeTreeNode:
     if robot_name is None:
         robot_name = onshape_client.get_document(did=did)[CommonAttributes.name]
@@ -671,7 +713,13 @@ def create_onshape_tree(
         eid=eid,
         wvm=wvm,
         )
-    return build_tree(json_data, robot_name=robot_name)
+    return build_tree(
+        json_data,
+        robot_name = robot_name,
+        store_data = store_data,
+        load_from_file = load_data,
+        file_path = file_path,
+        )
 
 
 def main():

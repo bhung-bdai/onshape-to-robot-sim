@@ -209,7 +209,7 @@ def convert_stls_to_objs(
         save_dir = ""
     
     for stl in stl_files:
-        obj_filename = stl.split(".")[0]
+        obj_filename = "".join(stl.split(".")[:-1])
         obj_path = os.path.join(save_dir, check_and_append_extension(obj_filename, API.obj))
         stl_path = os.path.join(stl_dir, check_and_append_extension(stl, API.stl))
         # subprocess.call(["ls"])

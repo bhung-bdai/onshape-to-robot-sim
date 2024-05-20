@@ -4,6 +4,7 @@ import os
 import pdb
 import uuid
 
+import open3d as o3d
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial.transform import Rotation
@@ -261,6 +262,21 @@ def _translate_rotation_axis(translation_pose: Pose3d, rotation_pose: Pose3d) ->
     )
 
 
+def find_closest_rigid_body(
+    mated_occurrence_path: list,
+    occurrence_id_to_rigid_bodies_nodes: dict,
+    parent_link: str
+    ) -> OnshapeTreeNode:
+    """Going down the line, finds the highest level rigid body that contains the part"""
+    node_path = ""
+    for additional_path in mated_occurrence_path:
+        node_path += additional_path
+        if node_path in occurrence_id_to_rigid_bodies_nodes:
+            return occurrence_id_to_rigid_bodies_nodes[node_path]
+    print(occurrence_id_to_rigid_bodies_nodes)
+    raise ValueError(f"Mate from {parent_link} to {mated_occurrence_path} not on rigid bodies!")
+
+
 class RobotSDF():
 
     world_frame: str = "world_frame"
@@ -307,11 +323,15 @@ class RobotSDF():
         """ 
         # Loops through all the joints in the parent and creates a joint
         # print(parent_link)
+        # breakpoint()
         print(joint_info)
         for joint in joint_info:
             child = joint[FeatureAttributes.children]
-            child_occurrence_id = "".join(child[FeatureAttributes.matedOccurrence])
-            child_node = occurrence_id_to_node[child_occurrence_id]
+            child_node = find_closest_rigid_body(
+                child[FeatureAttributes.matedOccurrence],
+                occurrence_id_to_node,
+                parent_link
+            )
             gz_mate_type = onshape_mate_to_gz_mate(joint[FeatureAttributes.mateType])
             element_tform_joint = joint[FeatureAttributes.transform]
             world_tform_joint = child_node.world_tform_element @ element_tform_joint
@@ -334,7 +354,7 @@ class RobotSDF():
             joint_sdf.set_type(JointType(gz_mate_type))
             # Set the joint to be linked to the parent and the child links
             joint_sdf.set_parent_name(parent_link)
-            joint_sdf.set_child_name(child_node.closest_rigid_body_link())
+            joint_sdf.set_child_name(child_node.simplified_name)
             # Add the pose of the joint
             # The transform is given wrt to the parent link so we extract/set pose
             # joint_t_world = joint[FeatureAttributes.transform]
@@ -519,12 +539,13 @@ class RobotSDF():
         # collision_sdf.set_raw_pose(com_in_world_gz)
         # link_sdf.add_collision(collision_sdf)
         # TODO: get all of the colors and make the visuals
+
         material_sdf = self.get_material(node)
         visual_sdf = make_visual_object(
             node.simplified_name + "_visual",
             mesh_uri,
         )
-        # TODO figure out why the visual is not correctly set
+        # TODO calculate the volume centroid of the object and use that to transform off the com
         visual_pose_in_world_gz = make_pose_gz(
             node.world_tform_element[:3, 3],
             rotationMatrixToEulerAngles(node.world_tform_element[:3, :3])
@@ -548,12 +569,13 @@ class RobotSDF():
 
     def _build_sdf(self, onshape_root: OnshapeTreeNode) -> None:
         # TODO: substitute it with the links instead of the parts.
-        for rigid_bodies in onshape_root.get_rigid_bodies():
-            self.add_link(rigid_bodies)
+        # breakpoint()
+        for rigid_body in list(onshape_root.get_occurrence_id_to_rigid_body_node().values()):
+            self.add_link(rigid_body)
         for joint_parent, joint_info in onshape_root.get_joint_parents().items():
             if joint_parent == onshape_root.simplified_name:
                 joint_parent = "world"
-            self.add_joints(joint_info, onshape_root.get_occurrence_id_to_node(), joint_parent)
+            self.add_joints(joint_info, onshape_root.get_occurrence_id_to_rigid_body_node(), joint_parent)
         
     def write_sdf(self, sdf_filepath: Optional[str] = None):
         """Writes the sdf as a string"""

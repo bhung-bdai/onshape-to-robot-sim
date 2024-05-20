@@ -185,25 +185,79 @@ def test_full_pipeline():
     # sdf_path = "/home/bhung/bdai/test/sdf_viewr/harder_arm"
     # sdf_name = "harder_arm"
     # #####################################################
-    print("Creating tree...")
-    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name=sdf_name)
-    with open(f"{sdf_name}_tree.pickle", "wb") as fi:
-        pickle.dump(tree, fi)
-    # with open(f"{sdf_name}_tree.pickle", "rb") as fi:
-    #     tree = pickle.load(fi)
+    ################ ALPHA ARM ########################
+    did = "e8781b431f32606ea5c54965"
+    wvmid = "b111151b56b22ef3c70af6cf"
+    eid = "aa4e98a002272561ed7c1de9"
+    wvm = "v"
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_arm"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_arm"
+    sdf_path = "/home/bhung/bdai/test/sdf_viewr/alpha"
+    sdf_name = "alpha_arm"
+    store_data = False
+    load_from_file = True
+    file_path = f"data/{sdf_name}.pickle"
+    #####################################################
+    # ################ Alpha Shoulder ########################
+    # did = "170c4feeceb4442201428f82"
+    # wvmid = "91cebc008d1370c9420c69ed"
+    # eid = "d04e6666d7681a875fac4ed7"
+    # wvm = "v"
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_shoulder"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_shoulder"
+    # sdf_path = "/home/bhung/bdai/test/sdf_viewr/alpha"
+    # sdf_name = "alpha_shoulder"
+    # store_data = True
+    # load_from_file = True
+    # file_path = f"data/{sdf_name}.pickle"
+    #####################################################
+    # print("Creating tree...")
+    # tree = create_onshape_tree(
+    #     did = did,
+    #     wvm = wvm,
+    #     wvmid = wvmid,
+    #     eid = eid,
+    #     store_data = store_data,
+    #     load_data = load_from_file,
+    #     file_path = file_path,
+    #     robot_name = sdf_name
+    # )
+    # with open(file_path, "wb") as fi:
+    #     pickle.dump(tree, fi)
+    with open(file_path, "rb") as fi:
+        tree = pickle.load(fi)["tree"]
+    # print("Downloading meshes...")
+    # try:
+    #     breakpoint()
+    #     mesh_files = download_all_rigid_bodies_meshes(
+    #         tree.get_occurrence_id_to_rigid_body_node().values(),
+    #         data_directory = stl_dir,
+    #         file_type = API.stl
+    #     )
+    #     convert_stls_to_objs(
+    #         mesh_files,
+    #         stl_dir,
+    #         obj_dir,
+    #         "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+    #     )
+    # except Exception as e:
+    #     pdb.post_mortem()
     print("Creating SDF...")
     test_sdf = RobotSDF(tree, mesh_directory=sdf_path, sdf_name=sdf_name)
     test_sdf.write_sdf(f"{sdf_path}/{sdf_name}")
     # rigid_bodies = tree.rigid_bodies
     # with open(f"{sdf_name}_dict.pickle", "wb") as fi:
-    #     pickle.dump(rigid_bodies, fi)
+    #     pickle.dump(tree.rigid_bodies, fi)
     # with open("throwy_dict.pickle", "rb") as fi:
     #     rigid_bodies = pickle.load(fi)
     # # breakpoint()
     print("Downloading meshes...")
     try:
+        breakpoint()
         mesh_files = download_all_rigid_bodies_meshes(
-            tree.rigid_bodies, data_directory=stl_dir, file_type=API.stl
+            tree.get_occurrence_id_to_rigid_body_node().values(),
+            data_directory = stl_dir,
+            file_type = API.stl
         )
         convert_stls_to_objs(
             mesh_files,
