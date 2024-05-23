@@ -4,6 +4,7 @@
 **.mtl
 **.zip
 **.pickle
+**.sdf
 .vscode
 robots
 !robots/skeleton/config.json

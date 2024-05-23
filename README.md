@@ -8,8 +8,10 @@ This tool is based on the [OnShape API](https://dev-portal.onshape.com/) to retr
 informations from an assembly and build an SDF or URDF model suitable for physics
 simulation.
 
-* [Documentation](https://onshape-to-robot.readthedocs.io/)
-* [Examples](https://github.com/rhoban/onshape-to-robot-examples)
+You will also need to install gazebo and sdformat to get this to work, unfortunately. You can do that by 
+changing to this directory and then running:
+```./install.sh```
 
-
-You will also need to install gazebo and sdformat to get this to work. Unfortunately
+### Using the package
+Go into the `onshape_to_sim` folder, modify the appropriate values inside the `run_onshape_to_sim.py`, and then run
+```python run_onshape_to_sim.py```

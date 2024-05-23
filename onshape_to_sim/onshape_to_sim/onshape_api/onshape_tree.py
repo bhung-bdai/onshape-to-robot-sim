@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from typing import Any, Callable, Optional, Sequence
+import copy
 
 from collections import deque
 from dataclasses import dataclass, asdict
@@ -34,8 +35,7 @@ from onshape_to_sim.utils import (
 )
 
 # TODO: figure out if this is going to be here later
-onshape_client = Client(creds="test_config.json", logging=False)
-# TODO: load these from a config
+
 
 part_relevant_metadata = set(("Rigid Body",))
 assembly_relevant_metadata = set(("Rigid Body",))
@@ -48,6 +48,18 @@ def get_element_tform_mate(mated_cs: dict) -> npt.ArrayLike:
     element_tform_mate[:3, 2] = np.array(mated_cs[FeatureAttributes.zAxis])
     element_tform_mate[:3, 3] = mated_cs[FeatureAttributes.origin]
     return np.round(element_tform_mate, decimals=10)
+
+
+def find_related_joints(joint_map: dict, occurrence_id: str) -> list:
+    """Find joints that the occurrence id uses"""
+    related_joints = []
+    # breakpoint()
+    for k, v in joint_map.items():
+        start_value = k[:17]
+        if occurrence_id.endswith(start_value):
+            related_joints.extend(v)
+    # breakpoint()
+    return related_joints
 
 
 class OnshapeTreeNode():
@@ -63,9 +75,10 @@ class OnshapeTreeNode():
         depth: int = 0,
         element_dict: Optional[dict] = None,
         node_id: Optional[str] = None,
-        occurrence_id: str = "",
+        occurrence_id: str = "world",
         parent_node: Optional[OnshapeTreeNode] = None,
         is_rigid_body: bool = False,
+        relative_path: list = [],
         ):
         self.element_dict: Optional[dict] = element_dict
         self.node_id: Optional[str] = node_id
@@ -79,7 +92,7 @@ class OnshapeTreeNode():
         self.depth: int = depth
         self.occurrence_id: str = occurrence_id
         self.hidden: bool = False
-        # self.joint_child_info: list = []
+        self.relative_path = relative_path
         self.world_tform_element: npt.ArrayLike = np.eye(4)
         self.element_tform_mate: Optional[npt.ArrayLike] = None
         self.com_wrt_world = np.zeros((3,))
@@ -174,13 +187,12 @@ class OnshapeTreeNode():
         Args:
             occurrence_map: mapping of path (joined into a single string) to the occurrence
         """
-        if self.occurrence_id == "":
+        if self.occurrence_id == "world":
             return
         if self.occurrence_id not in occurrence_map:
             raise ValueError(f"Instance {self.occurrence_id} not in occurrences!")
         occurrence = occurrence_map[self.occurrence_id]
         self.world_tform_element = np.array(occurrence[CommonAttributes.transform]).reshape(4, 4)
-        # self.world_tform_element = self.parent_node.world_tform_element @ self.world_tform_element
         self.hidden = bool(occurrence[OccurrenceAttributes.hidden])
 
     def _add_joint_info(self, joint_map: dict, joint_parents: dict) -> None:
@@ -194,17 +206,15 @@ class OnshapeTreeNode():
         # TODO: explain all this nonsense
         if self.occurrence_id is None or self.occurrence_id not in joint_map:
             return
+        # Need to search through these joints and see if the occurrence id ends with the joint
         for joint in joint_map[self.occurrence_id]:
-            # breakpoint()
-            # Thanks again to Onshape for being incompatible with this implementation
-            # Basically you need to go up to the nearest rigid body because mate connectors can only occur on faces of 
+            # Need to go up to the nearest rigid body because mate connectors can only occur on faces of 
             # parts. So if the parent assembly is the link, then we need to find it to define the joint instead
-            link_name = self.closest_rigid_body_link()
 
-            if link_name not in joint_parents:
-                joint_parents[link_name] = [joint]
+            if self.simplified_name not in joint_parents:
+                joint_parents[self.simplified_name] = [(joint, self.world_tform_element)]
             else:
-                joint_parents[link_name].append(joint)
+                joint_parents[self.simplified_name].append((joint, self.world_tform_element))
 
     def closest_rigid_body_link(self) -> str:
         # Thanks again to Onshape for being incompatible with this implementation
@@ -295,7 +305,7 @@ def _extract_mass_properties(response: dict) -> dict:
     return mass_properties
 
 
-def _add_instances_mass_properties(onshape_client: Client, instances: list, mass_properties_map: dict) -> None:
+def _add_instances_mass_properties(instances: list, mass_properties_map: dict) -> None:
     """Updates a map from instance ids to mass properties in-place.
     
     Args:
@@ -326,34 +336,14 @@ def _add_instances_mass_properties(onshape_client: Client, instances: list, mass
             mass_properties = _extract_mass_properties(mass)
             mass_properties_map[instance_id] = mass_properties
 
-
-def _build_mass_properties_map(onshape_client: Client, instances: list, subassemblies: list) -> dict:
-    """Given a list of instances, return a map from their occurence ids to mass properties in each instance and subassembly.
-    
-    We need to map this separately because each will require an API call to either the assembly mass properties or the 
-    part mass properties. The part mass properties will need a partID. I wish we could just aggregate a list of all
-    the mass properties but it's not possible under the current configuration, as PartStudio ignores assemblies. 
-    
-    Args:
-        instances: the instances of assemblies and parts inside the document.
-        subassemblies: the subassemblies inside the document
-
-    Returns:
-        A map of occurrence IDs to their mass properties
-    """
-    mass_properties_map = {}
-    _add_instances_mass_properties(onshape_client, instances, mass_properties_map)
-    for subassembly in subassemblies:
-        # Add all of the instances from the subassemblies into the mass properties map
-        _add_instances_mass_properties(onshape_client, subassembly[APIAttributes.instances], mass_properties_map)
-    return mass_properties_map
-
-def _build_features_map(features: list, subassemblies: list) -> dict:
+def _build_features_map(features: list, instance_ids: list, subassemblies: dict, occurrence_maps: dict) -> dict:
     """Constructs a map of path and mate data.
 
     Mapping path to the feature data of the mate. This is because mates occur between instances of objects, but they 
     aren't separated by the instance ids. Instead they're uniquely determined by the path. Wish they would just assign 
     ids but I think it's a clever way to leverage references? 
+
+    Importantly, this assumes the first object is the child, while the second connector is the parent
 
     Args:
         features: the features information returned in the OnShape API Call
@@ -362,61 +352,59 @@ def _build_features_map(features: list, subassemblies: list) -> dict:
         A mapping of occurrence ids to mates
     """
     features_map = {}
+    # Requires: the occurrence transform and the matedCS of the subassembly
+    # Currently we only add it when we add the rigid body in, which should work for us as well.
+    # We need to: 
+    # 1) Map the subassembly to its elementId and documentId
+    # 2) Use that to get each of the occurrence transforms
+    # 3) Grab the transform and apply it to the subassembly matedCS
+    # Alternative approach: we could instead store the information for each of the objects, then use
+    # the transform to the object/feature to figure it out later. I think this is the better approach
     # TODO @bhung add subassemblies
-    # for subassembly in json_assembly_data[APIAttributes.subassemblies]:
-    #     occurrence_path = 
-    #     assembly_features += subassembly[APIAttributes.features]
+    
+    for subassembly in subassemblies.values():
+        for i in range(len(subassembly[APIAttributes.features])): 
+            features.append(subassembly[APIAttributes.features][i])
+
     for feature in features:
         mated_entities = feature[FeatureAttributes.featureData][FeatureAttributes.matedEntities]
         mate_type = feature[FeatureAttributes.featureData][FeatureAttributes.mateType]
         mate_name = feature[FeatureAttributes.featureData][CommonAttributes.name]
-        # TODO @bhung figure out if the assumption that the parent is the final entity is true
-        # Loop through the n - 1 children and added them
-        entity_one_path = "".join(mated_entities[0][FeatureAttributes.matedOccurrence])
-        entity_two_path = "".join(mated_entities[1][FeatureAttributes.matedOccurrence])
-        if entity_one_path == "":
-            parent_entity = mated_entities[0]
-            parent_path = entity_one_path
-            child_path = mated_entities[1]
-        else:
-            parent_entity = mated_entities[1]
-            parent_path = entity_two_path
-            child_path = mated_entities[0]
-        parent_info = {
-            FeatureAttributes.children: [],
-            FeatureAttributes.is_parent: True,
-            FeatureAttributes.mateType: mate_type,
-            CommonAttributes.name: mate_name, 
-        }
-        # Based on docs, onshape forces mates to have 2 things
-        # Initialize the child information
-        parent_info[FeatureAttributes.children]= child_path
-        # Extract the transform from the parent
-        parent_info[CommonAttributes.transform] = get_element_tform_mate(parent_entity[FeatureAttributes.matedCS])
+        parent_path = "".join(mated_entities[0][FeatureAttributes.matedOccurrence])
+        child_path = "".join(mated_entities[1][FeatureAttributes.matedOccurrence])
+        if parent_path == "":
+            parent_path = "world"
+            # The world is implicitly an identity transform
+            parent_info = {
+                FeatureAttributes.children: child_path,
+                FeatureAttributes.mateType: mate_type,
+                CommonAttributes.name: mate_name,
+                FeatureAttributes.matedCS: get_element_tform_mate(mated_entities[0][FeatureAttributes.matedCS])
+            }
+            if parent_path in features_map:
+                features_map[parent_path].append(parent_info)
+            else:
+                features_map[parent_path] = [parent_info]
+        for occ in occurrence_maps.keys():
+            if occ.endswith(parent_path):
+                end_ind = len(occ) - len(parent_path)
+                occ_transform = np.reshape(occurrence_maps[occ][CommonAttributes.transform], (4, 4))
+                mate_loc = occ_transform @ get_element_tform_mate(mated_entities[0][FeatureAttributes.matedCS])
+                parent_info = {
+                    FeatureAttributes.children: occ[:end_ind] + child_path,
+                    FeatureAttributes.mateType: mate_type,
+                    CommonAttributes.name: mate_name,
+                    FeatureAttributes.matedCS: mate_loc
+                }
+                if occ in features_map:
+                    features_map[occ].append(parent_info)
+                else:
+                    features_map[occ] = [parent_info]
 
-        # TODO: Check if we still need this eventually
-        # child_info = {
-        #     FeatureAttributes.parent: parent_path,
-        #     FeatureAttributes.is_parent: False,
-        #     FeatureAttributes.mateType: mate_type,
-        #     CommonAttributes.name: mate_name,
-        # }
-        # child_path = "".join(child_entity[FeatureAttributes.matedOccurrence])
-        # child_info[CommonAttributes.transform] = get_element_tform_mate(child_entity[FeatureAttributes.matedCS])
-        # if child_path in features_map:
-        #     features_map[child_path].append(child_info)
-        # else:
-        #     features_map[child_path] = [child_info]
-
-        # Check and add the information into the feature map
-        if parent_path in features_map:
-            features_map[parent_path].append(parent_info)
-        else:
-            features_map[parent_path] = [parent_info]
     return features_map
 
 
-def _add_instances_metadata(onshape_client: Client, instances: list, metadata_map: dict) -> dict:
+def _add_instances_metadata(instances: list, metadata_map: dict) -> dict:
     for instance in instances:
         instance_id = instance[CommonAttributes.idNum]
         if instance_id in metadata_map:
@@ -442,7 +430,7 @@ def _add_instances_metadata(onshape_client: Client, instances: list, metadata_ma
         metadata_map[instance_id] = metadata_value_map
         
 
-def _build_metadata_map(onshape_client: Client, instances: list, subassemblies: list) -> dict:
+def _build_metadata_map(instances: list, subassemblies: list) -> dict:
     """Given a list of instances, return a map of their occurence ids to metadata for each instance and subassembly.
     
     We need to map this separately because each will require an API call to each of the assembly or 
@@ -460,10 +448,10 @@ def _build_metadata_map(onshape_client: Client, instances: list, subassemblies: 
         A map of occurrence IDs to their mass properties
     """
     metadata_map = {}
-    _add_instances_metadata(onshape_client, instances, metadata_map)
+    _add_instances_metadata(instances, metadata_map)
     for subassembly in subassemblies:
         # Add all of the instances from the subassemblies into the mass properties map
-        _add_instances_metadata(onshape_client, subassembly[APIAttributes.instances], metadata_map)
+        _add_instances_metadata(subassembly[APIAttributes.instances], metadata_map)
     return metadata_map
 
 
@@ -511,24 +499,19 @@ def build_tree(
         root_dict[CommonAttributes.name] = CommonAttributes.root
         root_subassemblies = _build_subassemblies_map(json_assembly_data[APIAttributes.subassemblies])
         assembly_features = root_dict[APIAttributes.features]
-        # TODO: Add in the ability to recurse into the subassembly later for other joints
-        # for subassembly in json_assembly_data[APIAttributes.subassemblies]:
-        #     occurrence_path = 
-        #     assembly_features += subassembly[APIAttributes.features]
-        root_mates = _build_features_map(assembly_features, json_assembly_data[APIAttributes.subassemblies])
+        root_instances = root_dict[APIAttributes.instances]
+        instance_ids = [
+            instance[CommonAttributes.idNum] 
+            for instance in root_instances 
+            if instance[CommonAttributes.elementType] == ElementAttributes.assembly
+        ]
         root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
+        root_mates = _build_features_map(assembly_features, instance_ids, root_subassemblies, root_occurrences)
         root_instances = root_dict[APIAttributes.instances]
         root_metadata = _build_metadata_map(
-            onshape_client,
             root_instances,
             json_assembly_data[APIAttributes.subassemblies]
             )
-        # root_mass_properties = _build_mass_properties_map(
-        #     onshape_client,
-        #     root_instances,
-        #     json_assembly_data[APIAttributes.subassemblies]
-        #     )
-
     root_node = OnshapeTreeNode(name=robot_name, element_dict=root_dict)
     build_tree_helper(
         root_node,
@@ -545,7 +528,6 @@ def build_tree(
         all_items[APIAttributes.features] = root_mates
         all_items[APIAttributes.occurrences] = root_occurrences
         all_items[API.metadata] = root_metadata
-        # all_items[API.mass_properties] = root_mass_properties
         save_in_pickle(all_items, file_path)
     return root_node
 
@@ -567,7 +549,6 @@ def build_tree_helper(
     """ 
     stack = deque()
     stack.append(root)
-    depth = 0
     is_root_node = True
     while len(stack) > 0:
         next_node = stack.pop()
@@ -580,12 +561,19 @@ def build_tree_helper(
         # Basically the only one that gets called without being a child first is the root.
         # Root doesn't have mass properties so it doens't matter, and we only need to add mass 
         # properties for the children
-        # Iterate through the elements in the API instances 
+        # Iterate through the elements in the API instances
+        if next_node.occurrence_id == "world":
+            current_occ_id = ""
+            new_rel_path = []
+        else:
+            current_occ_id = next_node.occurrence_id
+            new_rel_path = copy.deepcopy(next_node.relative_path)
+            new_rel_path.append(next_node.node_id)
+        
         for instance in next_element[APIAttributes.instances]:
             # Create a child node
             occurrence_id = instance[CommonAttributes.idNum]
             instance_name = instance[CommonAttributes.name]
-            # print(occurrence_id)
             # Check if we've seen this element name. If so, assign a unique name and add it
             if instance_name not in root.internal_naming:
                 root.internal_naming[instance_name] = 0
@@ -602,16 +590,18 @@ def build_tree_helper(
                 except KeyError:
                     # Rigid Body isn't a property, so we skip it 
                     pass
-
+            depth = next_node.depth + 1
             child_node = OnshapeTreeNode(
-                depth=next_node.depth+1,
+                depth=depth,
                 element_dict=instance,
                 node_id=occurrence_id,
                 name=f"{instance_name} {root.internal_naming[instance_name]}",
-                occurrence_id=f"{next_node.occurrence_id}{occurrence_id}",
+                occurrence_id=f"{current_occ_id}{occurrence_id}",
                 parent_node=next_node,
-                is_rigid_body=is_rigid
+                is_rigid_body=is_rigid,
+                relative_path=new_rel_path
                 )
+
             # Add information about the occurrences and mates
             child_node._initialize_node(document_occurrences, document_mates, root.joint_parents)
             # Recalculate the COM and inertia wrt world frame, given by occurrence transform
@@ -620,13 +610,8 @@ def build_tree_helper(
             if is_rigid:
                 child_node._add_mass_properties()
                 root.occurrence_id_to_rigid_body_node[child_node.occurrence_id] = child_node
-                # TODO: integrate this more smoothly later on
-                continue
-
-            # TODO: see if we can set the base case to a rigid body. Need to find the nearest rigid body
-            # Base case: we hit a part. Add the child to the node and skip adding it to the queue
-            if instance[CommonAttributes.elementType] == ElementAttributes.part:
                 next_node.add_child(child_node)
+                # TODO: integrate this more smoothly later on
                 continue
 
             # Recursive case: we hit a subassembly. Add it to the top of the stack with its subassembly data
@@ -634,6 +619,8 @@ def build_tree_helper(
             child_node.element_dict = document_subassemblies[child_id]
             stack.append(child_node)
             next_node.add_child(child_node)
+        
+            
 
 
 def download_all_rigid_bodies_meshes(
@@ -704,7 +691,10 @@ def create_onshape_tree(
     load_data: bool = False,
     file_path: bool = False,
     robot_name: Optional[str] = None,
+    api_client: Any = None,
     ) -> OnshapeTreeNode:
+    global onshape_client
+    onshape_client = api_client
     if robot_name is None:
         robot_name = onshape_client.get_document(did=did)[CommonAttributes.name]
     json_data = onshape_client.assembly_definition(
@@ -720,31 +710,3 @@ def create_onshape_tree(
         load_from_file = load_data,
         file_path = file_path,
         )
-
-
-def main():
-    # TODO: add this credentials things (client = Client(creds=""))
-    # did = "6041e7103bb40af449a81618"
-    # wvmid = "7e51d7b6b381bd79481e2033"
-    # eid = "aad7f639435879b7135dce0f"
-    # wvm = "v"
-    # did = "9e58c2c2298902a0b2526461"
-    # wvmid = "10c0fc2dbd8f4f1d0e448548"
-    # eid = "5048884906d62c21e634d119"
-    # d2b65b007cccdccd672c9efe/v/d5207597cf0d4de2d51a2350/e/d64d0511810bd7d9d742d1bb
-    did = "d2b65b007cccdccd672c9efe"
-    wvmid = "13393916865ef21e14c7564a"
-    eid = "d64d0511810bd7d9d742d1bb"
-    # did = "6041e7103bb40af449a81618"
-    # wvmid = "f6f89c195eec60b2e5c8a73e"
-    # eid = "aad7f639435879b7135dce0f"
-    wvm = "v"
-    test = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid)
-    test.print_transforms()
-    test.print_children()
-    print(test.joint_parents)
-    test.print_mass_properties()
-
-
-if __name__ == "__main__":
-    main()
