@@ -4,6 +4,7 @@ import os
 import pdb
 import uuid
 
+import open3d as o3d
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial.transform import Rotation
@@ -252,13 +253,29 @@ def make_dummy_name(parent_name: str, child_name: str, joint_type: str, axis: st
 
 def _translate_rotation_axis(translation_pose: Pose3d, rotation_pose: Pose3d) -> Pose3d:
     return Pose3d(
-        translation_pose.x(), # + rotation_pose.x(),
-        translation_pose.y(), #  + rotation_pose.y(),
-        translation_pose.z(), #  + rotation_pose.z(),
+        translation_pose.x(),
+        translation_pose.y(),
+        translation_pose.z(),
         rotation_pose.roll(),
         rotation_pose.pitch(),
         rotation_pose.yaw(),
     )
+
+
+def find_closest_rigid_body(
+    mated_occurrence_path: list,
+    occurrence_id_to_rigid_bodies_nodes: dict,
+    parent_link: str
+    ) -> OnshapeTreeNode:
+    """Going down the line, finds the highest level rigid body that contains the part"""
+    node_path = ""
+    for additional_path in mated_occurrence_path:
+        node_path += additional_path
+        # breakpoint()
+        if node_path in occurrence_id_to_rigid_bodies_nodes:
+            return occurrence_id_to_rigid_bodies_nodes[node_path]
+    print(occurrence_id_to_rigid_bodies_nodes)
+    raise ValueError(f"Mate from {parent_link} to {mated_occurrence_path} not on rigid bodies!")
 
 
 class RobotSDF():
@@ -269,6 +286,8 @@ class RobotSDF():
         self.robot_name = onshape_root.name
         self.sdf_root = Root()
         self.mesh_directory = mesh_directory
+        if not os.path.isdir(mesh_directory):
+            os.mkdir(mesh_directory)
         model = Model()
         if sdf_name is None:
             model.set_name(self.robot_name)
@@ -304,51 +323,29 @@ class RobotSDF():
         This also supposes that a pair of mates only have one parent and one child. This is due to Onshape.
         """ 
         # Loops through all the joints in the parent and creates a joint
-        # print(parent_link)
-        for joint in joint_info:
+        for joint, parent_transform in joint_info:
             child = joint[FeatureAttributes.children]
-            child_occurrence_id = "".join(child[FeatureAttributes.matedOccurrence])
-            child_node = occurrence_id_to_node[child_occurrence_id]
+            # TODO (@bhung): see if this is still necessary after the new changes
+            # child_node = find_closest_rigid_body(
+            #     child,
+            #     occurrence_id_to_node,
+            #     parent_link
+            # )
+            child_node = occurrence_id_to_node[child]
             gz_mate_type = onshape_mate_to_gz_mate(joint[FeatureAttributes.mateType])
-            element_tform_joint = joint[FeatureAttributes.transform]
-            world_tform_joint = child_node.world_tform_element @ element_tform_joint
+            world_tform_joint = joint[FeatureAttributes.matedCS]
             joint_wrt_world_gz = make_pose_gz(
                 world_tform_joint[:3, 3],
                 rotationMatrixToEulerAngles(world_tform_joint[:3, :3])
             )
-            # Fix the base link to the origin
-
-            # # Create a joint frame at the current joint location. This should be wrong in the next iteration but we want to test it
-            # joint_frame_sdf = Frame()
-            # joint_frame_name = f"{joint[CommonAttributes.name]}_frame"
-            # joint_frame_sdf.set_name(joint_frame_name)
-            # joint_frame_sdf.set_raw_pose(transform_to_pose(joint_t_world))
-            # # print(f"{joint_frame_name}: {joint_t_world}")
-            # self.add_frame_to_root(joint_frame_sdf)
 
             # Create the joint attached to the thing
             joint_sdf = Joint()
             joint_sdf.set_type(JointType(gz_mate_type))
             # Set the joint to be linked to the parent and the child links
             joint_sdf.set_parent_name(parent_link)
-            joint_sdf.set_child_name(child_node.closest_rigid_body_link())
-            # Add the pose of the joint
-            # The transform is given wrt to the parent link so we extract/set pose
-            # joint_t_world = joint[FeatureAttributes.transform]
-            # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
-            # parent_t_world = pose_to_transform(parent_pose)
-            # # joint_t_world_match_parent = rotate_transform(R=parent_t_world[:3, :3], H=joint_t_world)
-            # # print(parent_t_world)
-            # joint_t_world_match_parent = joint_t_world # parent_t_world @   @ np.linalg.inv(joint_t_world)
-
-            # parent_rotation = eulerAnglesToRotationMatrix(parent_pose)
-            # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
-            # parent_transform = np.zeros((4, 4))
-            # parent_transform[:3, :3] = parent_rotation
-            # parent_transform[:3, 3] = parent_translation
-            # # print(parent_transform)
-            # joint_transform = joint_transform @ parent_transform
-            # print(f"Joint {parent_link} : {joint_pose_gz}")
+            joint_sdf.set_child_name(child_node.simplified_name)
+  
             joint_sdf.set_raw_pose(joint_wrt_world_gz)
             joint_sdf.set_name(joint[CommonAttributes.name])
             # TODO implement the rest of the joints types later
@@ -365,99 +362,101 @@ class RobotSDF():
                     # Both of the above need to be added in metadata I think.
                     # breakpoint()
                     pass
-                case JointTypeMap.fixed:
-                    print(joint_sdf.raw_pose())
-                    pass
-                case JointTypeMap.planar:
-                    # Add a Revolute on the Z-axis and two prismatic on the X
-                    # We add both of the prismatics here
-                    # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
-                    # child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
-                    # # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
-                    # child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
-                    # print(pose_to_transform(child_pose))
-                    # print(pose_to_transform(parent_pose))
-                    # joint_pose_gz = make_pose_gz(
-                    #     child_translation,
-                    #     rotationMatrixToEulerAngles(
-                    #         joint_transform[:3, :3]
-                    #     )
-                    # )
-                    # Create and attach the dummy link for the x-axis prismatic joint to the parent link
-                    dummy_x_link = make_dummy_name(
-                        joint_sdf.parent_name(), joint_sdf.child_name(), joint[CommonAttributes.name], "x"
-                    )
-                    dummy_x_frame = self.add_dummy_link(dummy_x_link, child_node.mass, joint_pose_gz)
-                    # Set up the prismatic x joint
-                    prismatic_x_sdf = Joint()
-                    prismatic_x_sdf.set_type(JointType(JointTypeMap.prismatic))
-                    prismatic_x_sdf.set_parent_name(parent_link)
-                    prismatic_x_sdf.set_child_name(dummy_x_link)
-                    prismatic_x_sdf.set_raw_pose(joint_pose_gz)
-                    prismatic_x_sdf.set_name(joint[CommonAttributes.name] + " x")
-                    prismatic_x_sdf.set_axis(0, make_joint_axis_object(1, 0, 0))
-                    self.sdf_root.model().add_joint(prismatic_x_sdf)
+                # case JointTypeMap.fixed:
+                #     print(joint_sdf.raw_pose())
+                #     pass
+                # TODO (@bhung) support this
+                # case JointTypeMap.planar:
+                #     # Add a Revolute on the Z-axis and two prismatic on the X
+                #     # We add both of the prismatics here
+                #     # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
+                #     # child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
+                #     # # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
+                #     # child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
+                #     # print(pose_to_transform(child_pose))
+                #     # print(pose_to_transform(parent_pose))
+                #     # joint_pose_gz = make_pose_gz(
+                #     #     child_translation,
+                #     #     rotationMatrixToEulerAngles(
+                #     #         joint_transform[:3, :3]
+                #     #     )
+                #     # )
+                #     # Create and attach the dummy link for the x-axis prismatic joint to the parent link
+                #     dummy_x_link = make_dummy_name(
+                #         joint_sdf.parent_name(), joint_sdf.child_name(), joint[CommonAttributes.name], "x"
+                #     )
+                #     dummy_x_frame = self.add_dummy_link(dummy_x_link, child_node.mass, joint_pose_gz)
+                #     # Set up the prismatic x joint
+                #     prismatic_x_sdf = Joint()
+                #     prismatic_x_sdf.set_type(JointType(JointTypeMap.prismatic))
+                #     prismatic_x_sdf.set_parent_name(parent_link)
+                #     prismatic_x_sdf.set_child_name(dummy_x_link)
+                #     prismatic_x_sdf.set_raw_pose(joint_pose_gz)
+                #     prismatic_x_sdf.set_name(joint[CommonAttributes.name] + " x")
+                #     prismatic_x_sdf.set_axis(0, make_joint_axis_object(1, 0, 0))
+                #     self.sdf_root.model().add_joint(prismatic_x_sdf)
 
-                    # Create and attach the dummy link for the y-axis prismatic joint to the dummy x link
-                    dummy_y_link = make_dummy_name(
-                        joint_sdf.parent_name(), joint_sdf.child_name(), joint[CommonAttributes.name], "y"
-                    )
-                    dummy_y_frame = self.add_dummy_link(dummy_y_link, child_node.mass, joint_pose_gz)
-                    # Set up the prismatic y joint
-                    prismatic_y_sdf = Joint()
-                    prismatic_y_sdf.set_type(JointType(JointTypeMap.prismatic))
-                    prismatic_y_sdf.set_parent_name(dummy_x_link)
-                    prismatic_y_sdf.set_child_name(dummy_y_link)
-                    prismatic_y_sdf.set_raw_pose(joint_pose_gz)
-                    prismatic_y_sdf.set_name(joint[CommonAttributes.name] + " y")
-                    prismatic_y_sdf.set_axis(0, make_joint_axis_object(0, 1, 0))
-                    self.sdf_root.model().add_joint(prismatic_y_sdf)
+                #     # Create and attach the dummy link for the y-axis prismatic joint to the dummy x link
+                #     dummy_y_link = make_dummy_name(
+                #         joint_sdf.parent_name(), joint_sdf.child_name(), joint[CommonAttributes.name], "y"
+                #     )
+                #     dummy_y_frame = self.add_dummy_link(dummy_y_link, child_node.mass, joint_pose_gz)
+                #     # Set up the prismatic y joint
+                #     prismatic_y_sdf = Joint()
+                #     prismatic_y_sdf.set_type(JointType(JointTypeMap.prismatic))
+                #     prismatic_y_sdf.set_parent_name(dummy_x_link)
+                #     prismatic_y_sdf.set_child_name(dummy_y_link)
+                #     prismatic_y_sdf.set_raw_pose(joint_pose_gz)
+                #     prismatic_y_sdf.set_name(joint[CommonAttributes.name] + " y")
+                #     prismatic_y_sdf.set_axis(0, make_joint_axis_object(0, 1, 0))
+                #     self.sdf_root.model().add_joint(prismatic_y_sdf)
 
-                    # Set the link to connect dummy to distal
-                    joint_sdf.set_type(JointType(JointTypeMap.revolute))
-                    joint_sdf.set_axis(0, make_joint_axis_object(0, 0, 1))
-                    joint_sdf.set_parent_name(dummy_y_link)
-                    joint_sdf.set_raw_pose(joint_pose_gz)
-                case JointTypeMap.cylinder:
-                    # Add a Revolute on the Z and a prismatic on the Z
-                    # The way this is done, because onshape is weird, is to attach the links to the parent and 
-                    # force them to be at the parent location. The rotation is handled internally since the 
-                    # transform given by onshape is wonky and weird. Basically the joint needs to apply the rotation
-                    # on the parent for it to work, but the offset given by the parent is large enough to mess
-                    # up the translation part.
-                    # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
-                    # child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
-                    # # parent_rotation = eulerAnglesToRotationMatrix(parent_pose)
-                    # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
-                    # child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
-                    # joint_pose_gz = make_pose_gz(
-                    #     parent_translation,
-                    #     rotationMatrixToEulerAngles(joint_transform[:3, :3])
-                    # )
+                #     # Set the link to connect dummy to distal
+                #     joint_sdf.set_type(JointType(JointTypeMap.revolute))
+                #     joint_sdf.set_axis(0, make_joint_axis_object(0, 0, 1))
+                #     joint_sdf.set_parent_name(dummy_y_link)
+                #     joint_sdf.set_raw_pose(joint_pose_gz)
+                # TODO (@bhung) Support this
+                # case JointTypeMap.cylinder:
+                #     # Add a Revolute on the Z and a prismatic on the Z
+                #     # The way this is done, because onshape is weird, is to attach the links to the parent and 
+                #     # force them to be at the parent location. The rotation is handled internally since the 
+                #     # transform given by onshape is wonky and weird. Basically the joint needs to apply the rotation
+                #     # on the parent for it to work, but the offset given by the parent is large enough to mess
+                #     # up the translation part.
+                #     # parent_pose = self.sdf_root.model().link_by_name(parent_link).inertial().pose()
+                #     # child_pose = self.sdf_root.model().link_by_name(child_node.simplified_name).inertial().pose()
+                #     # # parent_rotation = eulerAnglesToRotationMatrix(parent_pose)
+                #     # parent_translation = np.array([parent_pose.x(), parent_pose.y(), parent_pose.z()])
+                #     # child_translation = np.array([child_pose.x(), child_pose.y(), child_pose.z()])
+                #     # joint_pose_gz = make_pose_gz(
+                #     #     parent_translation,
+                #     #     rotationMatrixToEulerAngles(joint_transform[:3, :3])
+                #     # )
 
-                    # Create and fix the dummy link to the parent link
-                    dummy_link = make_dummy_name(
-                        joint_sdf.parent_name(), joint_sdf.child_name(), joint[CommonAttributes.name], "z"
-                    )
-                    dummy_frame = self.add_dummy_link(dummy_link, child_node.mass, joint_pose_gz)
+                #     # Create and fix the dummy link to the parent link
+                #     dummy_link = make_dummy_name(
+                #         joint_sdf.parent_name(), joint_sdf.child_name(), joint[CommonAttributes.name], "z"
+                #     )
+                #     dummy_frame = self.add_dummy_link(dummy_link, child_node.mass, joint_pose_gz)
 
-                    # Set up the prismatic joint
-                    prismatic_z_sdf = Joint()
-                    prismatic_z_sdf.set_type(JointType(JointTypeMap.prismatic))
-                    prismatic_z_sdf.set_parent_name(parent_link)
-                    prismatic_z_sdf.set_child_name(dummy_link)
-                    prismatic_z_sdf.set_raw_pose(joint_pose_gz)
-                    prismatic_z_sdf.set_name(joint[CommonAttributes.name] + " z")
-                    z_axis = make_joint_axis_object(0, 0, 1)
-                    z_axis.set_xyz_expressed_in(dummy_frame)
-                    prismatic_z_sdf.set_axis(0, make_joint_axis_object(0, 0, 1))
-                    self.sdf_root.model().add_joint(prismatic_z_sdf)
+                #     # Set up the prismatic joint
+                #     prismatic_z_sdf = Joint()
+                #     prismatic_z_sdf.set_type(JointType(JointTypeMap.prismatic))
+                #     prismatic_z_sdf.set_parent_name(parent_link)
+                #     prismatic_z_sdf.set_child_name(dummy_link)
+                #     prismatic_z_sdf.set_raw_pose(joint_pose_gz)
+                #     prismatic_z_sdf.set_name(joint[CommonAttributes.name] + " z")
+                #     z_axis = make_joint_axis_object(0, 0, 1)
+                #     z_axis.set_xyz_expressed_in(dummy_frame)
+                #     prismatic_z_sdf.set_axis(0, make_joint_axis_object(0, 0, 1))
+                #     self.sdf_root.model().add_joint(prismatic_z_sdf)
 
-                    # Set the link to connect dummy to distal
-                    joint_sdf.set_type(JointType(JointTypeMap.revolute))
-                    joint_sdf.set_axis(0, z_axis)
-                    joint_sdf.set_parent_name(dummy_link)
-                    joint_sdf.set_raw_pose(joint_pose_gz)
+                #     # Set the link to connect dummy to distal
+                #     joint_sdf.set_type(JointType(JointTypeMap.revolute))
+                #     joint_sdf.set_axis(0, z_axis)
+                #     joint_sdf.set_parent_name(dummy_link)
+                #     joint_sdf.set_raw_pose(joint_pose_gz)
 
             self.sdf_root.model().add_joint(joint_sdf)
 
@@ -484,7 +483,6 @@ class RobotSDF():
         dummy_frame_sdf.set_name(f"{dummy_name}_frame")
         dummy_frame_sdf.set_attached_to(dummy_sdf.name())
         dummy_frame_sdf.set_raw_pose(parent_location)
-        print(f"{dummy_frame_sdf.name()} : {pose_to_transform(dummy_frame_sdf.raw_pose())}")
         self.sdf_root.model().add_frame(dummy_frame_sdf)
         return dummy_frame_sdf.name()
 
@@ -515,13 +513,15 @@ class RobotSDF():
         # )
         # collision_sdf.set_raw_pose(com_in_world_gz)
         # link_sdf.add_collision(collision_sdf)
+
         # TODO: get all of the colors and make the visuals
         material_sdf = self.get_material(node)
         visual_sdf = make_visual_object(
             node.simplified_name + "_visual",
             mesh_uri,
         )
-        # TODO figure out why the visual is not correctly set
+
+        # TODO calculate the volume centroid of the object and use that to transform off the com
         visual_pose_in_world_gz = make_pose_gz(
             node.world_tform_element[:3, 3],
             rotationMatrixToEulerAngles(node.world_tform_element[:3, :3])
@@ -544,13 +544,13 @@ class RobotSDF():
         return make_material_object()
 
     def _build_sdf(self, onshape_root: OnshapeTreeNode) -> None:
-        # TODO: substitute it with the links instead of the parts.
-        for rigid_bodies in onshape_root.get_rigid_bodies():
-            self.add_link(rigid_bodies)
+        """Creates an SDF using the Onshape root node"""
+        for rigid_body in list(onshape_root.get_occurrence_id_to_rigid_body_node().values()):
+            self.add_link(rigid_body)
         for joint_parent, joint_info in onshape_root.get_joint_parents().items():
             if joint_parent == onshape_root.simplified_name:
                 joint_parent = "world"
-            self.add_joints(joint_info, onshape_root.get_occurrence_id_to_node(), joint_parent)
+            self.add_joints(joint_info, onshape_root.get_occurrence_id_to_rigid_body_node(), joint_parent)
         
     def write_sdf(self, sdf_filepath: Optional[str] = None):
         """Writes the sdf as a string"""

@@ -1,2 +1,3 @@
 bullet
+example_dir
 onshape_to_sim
