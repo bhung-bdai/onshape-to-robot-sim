@@ -15,3 +15,5 @@ changing to this directory and then running:
 ### Using the package
 Go into the `onshape_to_sim` folder, modify the appropriate values inside the `run_onshape_to_sim.py`, and then run
 ```python run_onshape_to_sim.py```
+
+For a detailed explanation on how to use this, please see the Notion page on the BDAII page documenting the state of this package.
