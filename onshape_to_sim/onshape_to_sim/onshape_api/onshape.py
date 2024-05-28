@@ -5,6 +5,8 @@ onshape
 Provides access to the Onshape REST API
 """
 from typing import Optional
+import sys
+import pdb
 
 from . import utils
 
@@ -246,21 +248,18 @@ class Onshape():
 
             new_query = {}
             new_base_url = location.scheme + "://" + location.netloc
-            print(new_base_url)
 
             for key in querystring:
                 new_query[key] = querystring[key][0]  # won"t work for repeated query params
 
             return self.request(method, location.path, query=new_query, headers=headers, base_url=new_base_url, add_api_version=False)
         elif not res.status_code == 200:
-            # print(url)
             print(f"! ERROR ({res.status_code}) while using OnShape API")
             if res.text:
                 print(f"! {res.text}")
 
             if res.status_code == 403:
                 print("HINT: Check that your access rights are correct, and that the clock on your computer is set correctly")
-            exit()
             if self._logging:
                 utils.log(f"request failed, details: {res.text}", level=1)
         else:

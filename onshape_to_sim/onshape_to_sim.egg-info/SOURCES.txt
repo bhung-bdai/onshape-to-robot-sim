@@ -1,7 +1,6 @@
 LICENSE
 README.md
 pyproject.toml
-setup.py
 onshape_to_sim/onshape_to_sim/__init__.py
 onshape_to_sim/onshape_to_sim/bullet.py
 onshape_to_sim/onshape_to_sim/clear_cache.py
@@ -26,10 +25,14 @@ onshape_to_sim/onshape_to_sim/onshape_api/client.py
 onshape_to_sim/onshape_to_sim/onshape_api/onshape.py
 onshape_to_sim/onshape_to_sim/onshape_api/onshape_tree.py
 onshape_to_sim/onshape_to_sim/onshape_api/utils.py
+onshape_to_sim/onshape_to_sim/sdf/element_data.py
 onshape_to_sim/onshape_to_sim/sdf/sdf_description.py
 onshape_to_sim/onshape_to_sim/sdf/sdf_elements.py
-onshape_to_sim/onshape_to_sim/sdf/sdf_tree.py
+onshape_to_sim/onshape_to_sim/test/check_rots.py
+onshape_to_sim/onshape_to_sim/test/obj_viewer.py
 onshape_to_sim/onshape_to_sim/test/save_json.py
 onshape_to_sim/onshape_to_sim/test/test_onshape_api.py
 onshape_to_sim/onshape_to_sim/test/test_onshape_tree.py
 onshape_to_sim/onshape_to_sim/test/test_sdf_elements.py
+onshape_to_sim/onshape_to_sim/test/test_stl_conversions.py
+onshape_to_sim/onshape_to_sim/test/test_stl_exporter.py

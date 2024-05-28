@@ -1,0 +1,767 @@
+{
+  "jsonType": "metadata-element",
+  "elementType": 1,
+  "mimeType": "onshape/assembly",
+  "elementId": "d64d0511810bd7d9d742d1bb",
+  "properties": [
+    {
+      "name": "Name",
+      "value": "Assembly 1",
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": true,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d60d",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f819918904e34105850",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Description",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d60e",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f819918904e34105850",
+      "uiHints": {
+        "multiline": true
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Category",
+      "value": [
+        {
+          "memberCategoryIds": [
+            "5877a03ebe4c21163b49dce3"
+          ],
+          "memberCategories": [
+            {
+              "description": "Category created by upgrade",
+              "ownerType": 2,
+              "ownerId": "556f3109e4b00b3fee9a3f4a",
+              "publishState": 1,
+              "objectTypes": [
+                3
+              ],
+              "defaultObjectType": 3,
+              "name": "Onshape Assembly",
+              "id": "5877a03ebe4c21163b49dce3",
+              "href": null
+            }
+          ],
+          "description": "Default category for object type Assembly",
+          "ownerType": 1,
+          "ownerId": "65984f809918904e3410573f",
+          "publishState": 1,
+          "objectTypes": [
+            3
+          ],
+          "defaultObjectType": 3,
+          "name": "Assembly",
+          "id": "65984f809918904e341057ef",
+          "href": null
+        }
+      ],
+      "defaultValue": [
+        {
+          "memberCategoryIds": [
+            "5877a03ebe4c21163b49dce3"
+          ],
+          "memberCategories": [
+            {
+              "description": "Category created by upgrade",
+              "ownerType": 2,
+              "ownerId": "556f3109e4b00b3fee9a3f4a",
+              "publishState": 1,
+              "objectTypes": [
+                3
+              ],
+              "defaultObjectType": 3,
+              "name": "Onshape Assembly",
+              "id": "5877a03ebe4c21163b49dce3",
+              "href": null
+            }
+          ],
+          "description": "Default category for object type Assembly",
+          "ownerType": 1,
+          "ownerId": "65984f809918904e3410573f",
+          "publishState": 1,
+          "objectTypes": [
+            3
+          ],
+          "defaultObjectType": 3,
+          "name": "Assembly",
+          "id": "65984f809918904e341057ef",
+          "href": null
+        }
+      ],
+      "computedPropertyError": null,
+      "validator": null,
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "CATEGORY",
+      "propertyId": "57f3fb8efa3416c06701d625",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f819918904e34105850",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Part number",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 128,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d60f",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "5877a03ebe4c21163b49dce3",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Revision",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d610",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "5877a03ebe4c21163b49dce3",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "State",
+      "value": "0",
+      "defaultValue": "0",
+      "computedPropertyError": null,
+      "validator": null,
+      "required": true,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "ENUM",
+      "propertyId": "57f3fb8efa3416c06701d611",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": [
+        {
+          "value": "0",
+          "state": 0,
+          "label": "In progress"
+        },
+        {
+          "value": "1",
+          "state": 0,
+          "label": "Pending"
+        },
+        {
+          "value": "2",
+          "state": 0,
+          "label": "Released"
+        },
+        {
+          "value": "3",
+          "state": 0,
+          "label": "Obsolete"
+        },
+        {
+          "value": "4",
+          "state": 0,
+          "label": "Rejected"
+        },
+        {
+          "value": "5",
+          "state": 0,
+          "label": "Discarded"
+        }
+      ],
+      "schemaId": "5877a03ebe4c21163b49dce3",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Vendor",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d612",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Project",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d613",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Product line",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d614",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Title 1",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d616",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Title 2",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d617",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Title 3",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": 10000,
+        "pattern": null,
+        "quantityType": null,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "STRING",
+      "propertyId": "57f3fb8efa3416c06701d618",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": {
+        "multiline": false
+      },
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Not revision managed",
+      "value": false,
+      "defaultValue": false,
+      "computedPropertyError": null,
+      "validator": null,
+      "required": false,
+      "propertySource": 6,
+      "editable": false,
+      "valueType": "BOOL",
+      "propertyId": "57f3fb8efa3416c06701d61d",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "5877a03ebe4c21163b49dce3",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Exclude from BOM",
+      "value": false,
+      "defaultValue": false,
+      "computedPropertyError": null,
+      "validator": null,
+      "required": false,
+      "propertySource": 6,
+      "editable": false,
+      "valueType": "BOOL",
+      "propertyId": "57f3fb8efa3416c06701d61e",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Unit of measure",
+      "value": "Each",
+      "defaultValue": "Each",
+      "computedPropertyError": null,
+      "validator": null,
+      "required": false,
+      "propertySource": 6,
+      "editable": false,
+      "valueType": "ENUM",
+      "propertyId": "57f3fb8efa3416c06701d623",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": [
+        {
+          "value": "Centimeter",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Foot",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Inch",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Meter",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Millimeter",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Yard",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Gram",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Kilogram",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Ounce",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Pound",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Liter",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Gallon",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Each",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Fluid ounce",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Milliliter",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Centiliter",
+          "state": 0,
+          "label": null
+        },
+        {
+          "value": "Package",
+          "state": 0,
+          "label": null
+        }
+      ],
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Mass",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": {
+        "min": null,
+        "max": null,
+        "minLength": null,
+        "maxLength": null,
+        "pattern": null,
+        "quantityType": 5,
+        "maxCount": null,
+        "minCount": null,
+        "minDate": null,
+        "maxDate": null
+      },
+      "required": false,
+      "propertySource": 7,
+      "editable": false,
+      "valueType": "COMPUTED",
+      "propertyId": "57f3fb8efa3416c06701d626",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "5877a03ebe4c21163b49dce3",
+      "uiHints": null,
+      "computedAssemblyProperty": true,
+      "computedProperty": true,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Center of mass",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": null,
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "COMPUTED",
+      "propertyId": "57f3fb8efa3416c06701d627",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "5877a03ebe4c21163b49dce3",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Inertia",
+      "value": null,
+      "defaultValue": null,
+      "computedPropertyError": null,
+      "validator": null,
+      "required": false,
+      "propertySource": 0,
+      "editable": false,
+      "valueType": "COMPUTED",
+      "propertyId": "57f3fb8efa3416c06701d628",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "5877a03ebe4c21163b49dce3",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Subassembly BOM behavior",
+      "value": "0",
+      "defaultValue": "0",
+      "computedPropertyError": null,
+      "validator": null,
+      "required": true,
+      "propertySource": 6,
+      "editable": false,
+      "valueType": "ENUM",
+      "propertyId": "57f3fb8efa3416c06701d633",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": [
+        {
+          "value": "0",
+          "state": 0,
+          "label": "Show Assembly and components"
+        },
+        {
+          "value": "1",
+          "state": 0,
+          "label": "Show Assembly only"
+        },
+        {
+          "value": "2",
+          "state": 0,
+          "label": "Show components only"
+        }
+      ],
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    },
+    {
+      "name": "Rigid Body",
+      "value": false,
+      "defaultValue": false,
+      "computedPropertyError": null,
+      "validator": null,
+      "required": false,
+      "propertySource": 6,
+      "editable": false,
+      "valueType": "BOOL",
+      "propertyId": "660deb96ba8bb5000bc581d9",
+      "editableInUi": false,
+      "dateFormat": null,
+      "enumValues": null,
+      "schemaId": "65984f809918904e341057ef",
+      "uiHints": null,
+      "computedAssemblyProperty": false,
+      "computedProperty": false,
+      "multivalued": false,
+      "propertyOverrideStatus": 0
+    }
+  ],
+  "href": "https://cad.onshape.com/api/metadata/d/d2b65b007cccdccd672c9efe/v/36ecafd13c2c5d5ad78b7e04/e/d64d0511810bd7d9d742d1bb?configuration=default"
+}

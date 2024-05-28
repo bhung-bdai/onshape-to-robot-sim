@@ -1,5 +1,8 @@
 from typing import Union
 import json
+import pdb
+import pickle
+import sys
 
 import numpy as np
 
@@ -7,14 +10,14 @@ from onshape_to_sim.onshape_api.client import Client
 from onshape_to_sim.onshape_api.onshape_tree import (
     build_tree,
     create_onshape_tree,
-    # download_all_parts_meshes,
+    download_all_rigid_bodies_meshes,
     _add_instances_mass_properties,
-    _build_mass_properties_map
 )
 from onshape_to_sim.onshape_api.utils import (
     API,
     convert_stls_to_objs,
 )
+from onshape_to_sim.sdf.sdf_description import RobotSDF
 
 onshape_client = Client(creds="test_config.json", logging=False)
 
@@ -74,68 +77,218 @@ def test_add_instances_mass_properties():
     assert _check_equality_based_on_type(real_ans, test_dict)
 
 
-def test_mass_properties_map():
-    with open("../test/data/multi_features_sub_assembly.txt", "r") as fi:
-        json_data = json.load(fi)
-    instances = json_data["rootAssembly"]["instances"]
-    subassemblies = json_data["subAssemblies"]
-    mass_properties_map = _build_mass_properties_map(onshape_client, instances, subassemblies)
-    real_map = {
-        'ME0OGHafV27m4erd3': {'mass': 2.2387448144601145, 'hasMass': True, 'volume': 0.00027879761076713756, 'centroid': np.array([0.0375    , 0.02538434, 0.02252414]),
-        'inertia': np.array([[ 2.06022579e-03,  4.48497460e-10,  6.47005805e-11], [ 4.48497460e-10,  1.50690602e-03, -2.87610453e-04], [ 6.47005805e-11, -2.87610453e-04,  2.54353670e-03]])},
-        'MfnXxatwJGOcsLj0q': {'mass': 0.3354192025986777, 'hasMass': True, 'volume': 4.333581428923484e-05, 'centroid': np.array([-0.016 ,  0.0325,  0.025 ]),
-        'inertia': np.array([[0.0003453, 0., 0.], [0., 0.00017437, 0.], [0., 0., 0.00017437]])},
-        'MmRHXBai4kux8tPcZ': {'mass': 0.33541920259867775, 'hasMass': True, 'volume': 4.333581428923485e-05, 'centroid': np.array([-0.016 ,  0.0325,  0.025 ]),
-        'inertia': np.array([[0.0003453, 0., 0.], [0.        , 0.00017437, 0.        ], [0.        , 0.        , 0.00017437]])},
-        'MrWVPT9IK41t//ORF': {'mass': 0.6708384051973554, 'hasMass': True, 'volume': 0.00038488350313340065, 'centroid': np.array([0.00562545, 0.02410958, 0.02827908]),
-        'inertia': np.array([[0.00112744, -0.00050592,  0.00051152], [-0.00050592, 0.0017721, 0.00021231], [0.00051152,  0.00021231, 0.00176616]])},
-        'MQ47hvC+ZVKiW4z6K': {'mass': 0.6708384051973555, 'hasMass': True, 'volume': 0.00038488350313340065, 'centroid': np.array([0.00562545, 0.02410958, 0.02827908]),
-        'inertia': np.array([[0.00112744, -0.00050592,  0.00051152], [-0.00050592, 0.0017721, 0.00021231], [0.00051152,  0.00021231,  0.00176616]])},
-        'MMOby+OjmU+PDKhT8': {'mass': 0.0, 'hasMass': False, 'volume': 0.00014910593727746548, 'centroid': np.array([0., 0., 0.]),
-        'inertia': np.array([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])},
-        'MvW7NkK9OkQ8TI+lI': {'mass': 0.0, 'hasMass': False, 'volume': 0.00014910593727746548, 'centroid': np.array([0., 0., 0.]),
-        'inertia': np.array([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])},
-        'MmXPaG80Mq0OnEMRb': {'mass': 0.3354192025986777, 'hasMass': True, 'volume': 4.333581428923484e-05, 'centroid': np.array([-0.016, 0.0325, 0.025 ]),
-        'inertia': np.array([[0.0003453 , 0., 0.], [0., 0.00017437, 0.], [0., 0., 0.00017437]])},
-        'MjXp5OEcWIwYLGGrG': {'mass': 0.33541920259867775, 'hasMass': True, 'volume': 4.333581428923485e-05, 'centroid': np.array([-0.016, 0.0325, 0.025 ]),
-        'inertia': np.array([[0.0003453, 0., 0.], [0., 0.00017437, 0.], [0., 0., 0.00017437]])},
-        'MgaIc8LGcDUPIU5f7': {'mass': 0.0, 'hasMass': False, 'volume': 0.00029821187455493096, 'centroid': np.array([-0.04381188, -0.03670293, -0.03739811]),
-        'inertia': np.array([[ 1.00443474e-06, -5.08627335e-07, -4.01144826e-07], [-5.08627335e-07,  8.02950958e-07, -4.88390873e-07], [-4.01144826e-07, -4.88390873e-07,  1.03701629e-06]])}
-    }
-    assert _check_equality_based_on_type(mass_properties_map, real_map)
-
-
 def test_stl_download():
-    # d2b65b007cccdccd672c9efe/v/89942609c596c269771f7d84/e/d64d0511810bd7d9d742d1bb
+    # f = open('output.txt','w')
+    # sys.stdout = f
+    did = "dc7bc8baf40949ec82a161ab"
+    wvmid = "f403096346539d04d483a5e3"
+    eid = "e246deec97cc75cedfed8035"
+    wvm = "v"
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    print("Creating tree...")
+    # tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="throwy")
+    # with open("throwy_tree.pickle", "wb") as fi:
+    #     pickle.dump(tree, fi)
+    with open("throwy_tree.pickle", "rb") as fi:
+        tree = pickle.load(fi)
+    # item = tree.search_by_occurrence_id("MFsBZ/Px6SfioMMrpMDRYr4POebo8qzdQh")
+    # breakpoint()
+    print("Creating SDF...")
+    test_sdf = RobotSDF(tree, mesh_directory="/workspaces/bdai/test/sdf_viewr/throwy")
+    test_sdf.write_sdf("/home/bhung/bdai/test/sdf_viewr/throwy/throwy")
+    rigid_bodies = tree.rigid_bodies
+    with open("throwy_dict.pickle", "wb") as fi:
+        pickle.dump(rigid_bodies, fi)
+    with open("throwy_dict.pickle", "rb") as fi:
+        rigid_bodies = pickle.load(fi)
+    # breakpoint()
+    print("Downloading meshes...")
+    try:
+        mesh_files = download_all_rigid_bodies_meshes(
+            rigid_bodies, data_directory=stl_dir, file_type=API.stl
+        )
+        convert_stls_to_objs(
+            mesh_files,
+            stl_dir,
+            obj_dir,
+            "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+        )
+    except Exception as e:
+        pdb.post_mortem()
+
+
+def test_full_pipeline():
+    # f = open('output.txt','w')
+    # sys.stdout = f
+    # bf00afda41c872721af031c9/v/ee2d293125671a90033598ff/e/2c6cc034f38ef101337dcb9f
+    # d2b65b007cccdccd672c9efe/v/8b21eaeb7705b07014b18f35/e/d64d0511810bd7d9d742d1bb
+    ############## THROWY HAND ######################
+    # did = "bf00afda41c872721af031c9"
+    # wvmid = "a0a05ea9d3ac08f6f9cd3e6a"
+    # eid = "2c6cc034f38ef101337dcb9f"
+    # wvm = "v"
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    # sdf_path = "/home/bhung/bdai/test/sdf_viewr/throwy"
+    # sdf_name = "throwy_hand"
+    ##################################################
+    ############## SIMPLE ARM #######################
     did = "d2b65b007cccdccd672c9efe"
-    wvmid = "89942609c596c269771f7d84"
+    wvmid = "6798c9b07bd476ed792df435"
     eid = "d64d0511810bd7d9d742d1bb"
     wvm = "v"
-    stl_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
-    obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
-    tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="simple_arm")
-    mesh_files = download_all_parts_meshes(tree, data_directory=stl_dir, file_type=API.stl)
-    convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/basic_arm/basic_arm"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/basic_arm/basic_arm"
+    sdf_path = "/home/bhung/bdai/test/sdf_viewr/basic_arm"
+    sdf_name = "basic_arm"
+    ####################################################
+    # ############### HARDER ARM #######################
+    # did = "9e58c2c2298902a0b2526461"
+    # wvmid = "cf0d6030ccb0d5a12e0a9b91"
+    # eid = "5048884906d62c21e634d119"
+    # wvm = "v"
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/harder_arm/harder_arm"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/harder_arm/harder_arm"
+    # sdf_path = "/home/bhung/bdai/test/sdf_viewr/harder_arm"
+    # sdf_name = "harder_arm"
+    # #####################################################
+    ################ ALPHA ARM ########################
+    did = "e8781b431f32606ea5c54965"
+    wvmid = "b111151b56b22ef3c70af6cf"
+    eid = "aa4e98a002272561ed7c1de9"
+    wvm = "v"
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_arm"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_arm"
+    sdf_path = "/home/bhung/bdai/test/sdf_viewr/alpha"
+    sdf_name = "alpha_arm"
+    store_data = False
+    load_from_file = True
+    file_path = f"data/{sdf_name}.pickle"
+    #####################################################
+    # ################ Alpha Shoulder ########################
+    # did = "170c4feeceb4442201428f82"
+    # wvmid = "91cebc008d1370c9420c69ed"
+    # eid = "d04e6666d7681a875fac4ed7"
+    # wvm = "v"
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_shoulder"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/alpha/alpha_shoulder"
+    # sdf_path = "/home/bhung/bdai/test/sdf_viewr/alpha"
+    # sdf_name = "alpha_shoulder"
+    # store_data = True
+    # load_from_file = True
+    # file_path = f"data/{sdf_name}.pickle"
+    #####################################################
+    ################## Testy ############################
+    did = "cdd2ab0ab8757afe3d9e7315"
+    wvmid = "92c1a74a6045990ebdb0faf4"
+    eid = "c9b31228c9895c798565949b"
+    wvm = "v"
+    stl_dir = "/home/bhung/bdai/test/sdf_viewr/testy/mesh"
+    obj_dir = "/home/bhung/bdai/test/sdf_viewr/testy/mesh"
+    sdf_path = "/home/bhung/bdai/test/sdf_viewr/testy"
+    sdf_name = "testy"
+    store_data = True
+    load_from_file = False
+    file_path = f"data/{sdf_name}.pickle"
+    #####################################################
+    ################## Boxy ############################
+    # # https://theaiinstitute.onshape.com/documents/cdd2ab0ab8757afe3d9e7315/v/ca50d0300b33af4b46547e6c/e/d4c2fa9afeb1b9c911720621
+    # did = "cdd2ab0ab8757afe3d9e7315"
+    # wvmid = "ecd861fa451ba2c80cb2386e"
+    # eid = "d4c2fa9afeb1b9c911720621"
+    # wvm = "v"
+    # stl_dir = "/home/bhung/bdai/test/sdf_viewr/testy/mesh"
+    # obj_dir = "/home/bhung/bdai/test/sdf_viewr/testy/mesh"
+    # sdf_path = "/home/bhung/bdai/test/sdf_viewr/testy"
+    # sdf_name = "testy"
+    # store_data = True
+    # load_from_file = False
+    # file_path = f"data/{sdf_name}.pickle"
+    #####################################################
+    if not load_from_file:
+        print("Creating tree...")
+        tree = create_onshape_tree(
+            did = did,
+            wvm = wvm,
+            wvmid = wvmid,
+            eid = eid,
+            store_data = store_data,
+            load_data = load_from_file,
+            file_path = file_path,
+            robot_name = sdf_name
+        )
+        if store_data:
+            with open(file_path, "wb") as fi:
+                pickle.dump(tree, fi)
+    else:
+        with open(file_path, "rb") as fi:
+            tree = pickle.load(fi)["tree"]
+    # print("Downloading meshes...")
+    # try:
+    #     breakpoint()
+    #     mesh_files = download_all_rigid_bodies_meshes(
+    #         tree.get_occurrence_id_to_rigid_body_node().values(),
+    #         data_directory = stl_dir,
+    #         file_type = API.stl
+    #     )
+    #     convert_stls_to_objs(
+    #         mesh_files,
+    #         stl_dir,
+    #         obj_dir,
+    #         "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+    #     )
+    # except Exception as e:
+    #     pdb.post_mortem()
+    print(tree.get_joint_parents())
+    print("Creating SDF...")
+    test_sdf = RobotSDF(tree, mesh_directory=sdf_path, sdf_name=sdf_name)
+    test_sdf.write_sdf(f"{sdf_path}/{sdf_name}")
+    # rigid_bodies = tree.rigid_bodies
+    # with open(f"{sdf_name}_dict.pickle", "wb") as fi:
+    #     pickle.dump(tree.rigid_bodies, fi)
+    # with open("throwy_dict.pickle", "rb") as fi:
+    #     rigid_bodies = pickle.load(fi)
+    # # breakpoint()
+    print("Downloading meshes...")
+    try:
+        breakpoint()
+        mesh_files = download_all_rigid_bodies_meshes(
+            tree.get_occurrence_id_to_rigid_body_node().values(),
+            data_directory = stl_dir,
+            file_type = API.stl
+        )
+        convert_stls_to_objs(
+            mesh_files,
+            stl_dir,
+            obj_dir,
+            "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+        )
+    except Exception as e:
+        pdb.post_mortem()
 
 
 def stl_converter(stl_dir: str, obj_dir: str, mesh_files: str, stl_to_obj_location: str) -> None:
     # stl_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
     # obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
     # tree = create_onshape_tree(did=did, wvm=wvm, wvmid=wvmid, eid=eid, robot_name="simple_arm")
-    # mesh_files = download_all_parts_meshes(tree, data_directory=stl_dir, file_type=API.stl)
+    # mesh_files = download_all_rigid_bodies_meshes(tree, data_directory=stl_dir, file_type=API.stl)
     convert_stls_to_objs(mesh_files, stl_dir, obj_dir, "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api")
 
 
 if __name__ == "__main__":
+    # test_stl_download()
+    test_full_pipeline()
     # test_mass_properties_map()
-    stl_obj_dir = "/home/bhung/bdai/test/sdf_viewr/simple_arm/simple_arm"
-    mesh_files = ["base.stl", "part_assem.stl", "x_shaft.stl", "y_shaft.stl", "z_shaft.stl"]
-    stl_converter(
-        stl_obj_dir,
-        stl_obj_dir,
-        mesh_files,
-        "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
-    )
+    # stl_obj_dir =  "/home/bhung/bdai/test/sdf_viewr/throwy/throwy"
+    # mesh_files = ["base.stl", "part_assem.stl", "x_shaft.stl", "y_shaft.stl", "z_shaft.stl"]
+    # mesh_files = ["elbowdrive.stl", "forearm.stl", "housing.stl", "rotor.stl", "uaassembly.stl"]
+    # stl_converter(
+    #     stl_obj_dir,
+    #     stl_obj_dir,
+    #     mesh_files,
+    #     "/home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/onshape_api"
+    # )
 
     # test_stl_download()
 

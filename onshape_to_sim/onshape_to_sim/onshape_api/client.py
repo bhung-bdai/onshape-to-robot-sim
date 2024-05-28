@@ -64,8 +64,8 @@ def _create_obj_export_assem_body(
 def _create_stl_export_assem_body(
     stl_name: str,
     resolution: str,
-    ang_tol: float = 0.1,
-    dist_tol: float = 0.0001
+    ang_tol: float = 0.2,
+    dist_tol: float = 0.001
     ) -> dict:
     """Creates the body for an assembly obj export request. 
     
@@ -275,38 +275,28 @@ class Client():
         query = {"mode": "binary", "units": "meter", "configuration": configuration, "angleTolerance": 0.1}
         return self._api.request(API.get_request, json_request, headers=req_headers, query=query)
 
-    # TODO: remove dead code
-    def part_export_gltf(
+    def part_stl_pipeline(
         self,
         did: str,
         wvmid: str,
         eid: str,
         part_id: str,
-        wvm: str = API.workspace
-        ) -> requests.Response:
-        """
-        Exports STL export from a part studio
-
-        Args:
-            did: document id 
-            wvm: the type of document we want to draw from (workspace, version, or microversion)
-            wvmid: workspace/version/microversion id
-            eid: element id
-            part_id: the id of the part
-
-        Returns:
-            Onshape response data with the STL exported inside the request.content
-        """
-        json_request = join_api_url(
-            add_d_wvm_e_ids(API.parts, did=did, wvm=wvm, wvmid=wvmid, eid=eid),
-            API.part_id,
-            part_id,
-            API.gltf
+        filename: str,
+        file_extension: str = API.stl,
+        wvm: str = API.workspace,
+        resolution: str = API.coarse,
+        configuration: str = API.default,
+        ) -> None:
+        resp = self.part_export_stl(
+            did = did,
+            wvm = wvm,
+            wvmid = wvmid,
+            eid = eid,
+            part_id = part_id
         )
-        req_headers = {
-            "Accept": "model/gltf-binary;qs=0.08"
-        }
-        return self._api.request(API.get_request, json_request, headers=req_headers)
+        filename = check_and_append_extension(filename, file_extension)
+        with open(filename, "wb") as fi:
+            fi.write(resp.content)
 
     def assembly_export_obj(
         self,
@@ -612,7 +602,8 @@ class Client():
             API.config: configuration,
             API.mate_connectors: False,
             API.mate_features: True,
-            API.exclude_suppressed: True
+            API.exclude_suppressed: True,
+            API.non_solids: True,
         }
         return self._api.request(
             API.get_request,

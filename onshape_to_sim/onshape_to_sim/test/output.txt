@@ -1,0 +1,9 @@
+Creating tree...
+> /home/bhung/private-onshape-fork/onshape_to_sim/onshape_to_sim/test/test_onshape_tree.py(132)test_stl_download()
+-> print("Creating SDF...")
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) 

@@ -4,7 +4,7 @@ utils
 
 Handy functions for API key sample app
 '''
-
+from typing import Optional
 from dataclasses import dataclass, asdict
 import logging
 from logging.config import dictConfig
@@ -44,6 +44,7 @@ class API:
     metadata: str = "metadata"
     metadata_part: str = "p"
     microversion: str = "m"
+    non_solids: str = "includeNonSolids"
     obj: str = "obj"
     part_id: str = "partid"
     parts: str = "parts"
@@ -172,34 +173,6 @@ def get_relevant_metadata(metadata_list: list, relevant_metadata: set) -> dict:
     return metadata_value_map
 
 
-# def separate_objs(assembly_obj_file: str, assembly_mtl_file: str, save_dir: str = "") -> None:
-#     """Separates an assembly obj file into its constituent parts
-
-#     Meshes are denominated by a `g <name of the part>`. This should match the simplified name of the obj in the node.
-#     Each of these should also include a material denoted `usemtl <identifier>`.
-    
-#     Args:
-#         assembly_obj_file: obj file containing the entire assembly
-#         assembly_mtl_file: mtl file for the entire assembly
-#     """
-#     mesh_delimiter = "g"
-#     obj_mtl_delimiter = "usemtl"
-#     mtl_delimiter = "newmtl"
-#     assembly_obj_file = check_and_append_extension(assembly_obj_file, API.obj)
-#     with open(assembly_obj_file, "r") as obj_file:
-#         obj_dump = obj_file.read()
-#         obj_items = delimiter_separator(obj_dump, mesh_delimiter)
-#     for obj_filename, obj_data in obj_items.items():
-#         obj_save_file = os.path.join(save_dir, check_and_append_extension(obj_filename, API.obj))
-#         with open(obj_save_file, "w") as fi:
-#             fi.write(obj_data)
-#     print(len(obj_items))
-#     print(obj_items.keys())
-#     # with open(assembly_mtl_file, "r") as mtl_file:
-#     #     mtl_dump = mtl_file.read()
-#     #     mtl_items = obj_dump.split(mtl_delimiter)[1:]
-
-
 def check_and_append_extension(filename: str, extension: str) -> str:
     """Checks if the file ends with an extension. If not,it appends the given"""
     if len(filename.split(".")) > 1:
@@ -207,7 +180,12 @@ def check_and_append_extension(filename: str, extension: str) -> str:
     return f"{filename}.{extension}"
 
 
-def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "", path_to_onshape_api = "") -> None:
+def convert_stls_to_objs(
+    stl_files: list,
+    stl_dir: Optional[str] = None,
+    save_dir: Optional[str] = None,
+    path_to_onshape_api: Optional[str] = None,
+    ) -> None:
     """Given a list of stl files, saves them as .objs with the same name
 
     Args:
@@ -216,9 +194,22 @@ def convert_stls_to_objs(stl_files: list, stl_dir: str = "", save_dir: str = "",
         save_dir: the directory we want to save the .obj files to
     """
     # TODO: Figure out how to fix this later with an absolute path
-    stl_to_obj = os.path.join(path_to_onshape_api, "./stl2obj")
+    stl_to_obj = "./stl2obj"
+    if path_to_onshape_api is not None:
+        stl_to_obj = os.path.join(path_to_onshape_api, stl_to_obj)
+    # Create the stl save directory if it doesn't exist
+    if stl_dir is not None and not os.path.isdir(stl_dir):
+        os.mkdir(stl_dir)
+    elif stl_dir is None:
+        stl_dir = ""
+    # Create the obj save directory if it doesn't exist
+    if save_dir is not None and not os.path.isdir(save_dir):
+        os.mkdir(save_dir)
+    elif save_dir is None:
+        save_dir = ""
+    
     for stl in stl_files:
-        obj_filename = stl.split(".")[0]
+        obj_filename = "".join(stl.split(".")[:-1])
         obj_path = os.path.join(save_dir, check_and_append_extension(obj_filename, API.obj))
         stl_path = os.path.join(stl_dir, check_and_append_extension(stl, API.stl))
         # subprocess.call(["ls"])
