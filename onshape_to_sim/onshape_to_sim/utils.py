@@ -64,8 +64,11 @@ def express_mass_properties_in_world_frame(
     com_in_world_frame = (world_tform_element @ com_in_element_vector)[:3]
 
     # Expressing inertia in the link frame
-    inertia_in_world_frame = world_r_element @ inertia_in_element_frame @ world_r_element.T
-    return mass, com_in_world_frame, inertia_in_world_frame
+    # I = world_r_element @ inertia_in_element_frame @ world_r_element.T
+    # is only good if the inertial pose is not set. Since we set the inertial pose
+    # we need to keep the relative frame
+    
+    return mass, com_in_world_frame, inertia_in_element_frame
 
 
 def combine_inertial_properties(
