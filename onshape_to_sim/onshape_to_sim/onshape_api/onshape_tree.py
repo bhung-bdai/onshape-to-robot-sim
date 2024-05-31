@@ -400,7 +400,6 @@ def _build_features_map(features: list, instance_ids: list, subassemblies: dict,
                     features_map[occ].append(parent_info)
                 else:
                     features_map[occ] = [parent_info]
-
     return features_map
 
 
@@ -506,12 +505,12 @@ def build_tree(
             if instance[CommonAttributes.elementType] == ElementAttributes.assembly
         ]
         root_occurrences = _build_occurrences_map(root_dict[APIAttributes.occurrences])
-        root_mates = _build_features_map(assembly_features, instance_ids, root_subassemblies, root_occurrences)
         root_instances = root_dict[APIAttributes.instances]
         root_metadata = _build_metadata_map(
             root_instances,
             json_assembly_data[APIAttributes.subassemblies]
             )
+        root_mates = _build_features_map(assembly_features, instance_ids, root_subassemblies, root_occurrences)
     root_node = OnshapeTreeNode(name=robot_name, element_dict=root_dict)
     build_tree_helper(
         root_node,
@@ -626,13 +625,16 @@ def build_tree_helper(
 def download_all_rigid_bodies_meshes(
     rigid_bodies: Sequence[dict],
     data_directory: str = "",
-    file_type: str = API.stl
+    file_type: str = API.stl,
+    api_client: Any = None,
     ) -> list:
     """Downloads the STL associated with each part inside the document.
     
     Returns:
         A list containing the names of each rigid body we want to render in the viusalizer
     """
+    if api_client is not None:
+        onshape_client = api_client
     if data_directory != "" and not os.path.isdir(data_directory):
         os.mkdir(data_directory)
     rigid_bodies_seen = set()
